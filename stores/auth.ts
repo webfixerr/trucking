@@ -1,14 +1,26 @@
 import { create } from 'zustand';
 import api from '@/lib/api';
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
 interface AuthState {
   token: string | null;
-  user: any | null;
+  user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
 }
+
+const DEMO_USER = {
+  id: '1',
+  name: 'Demo User',
+  email: 'demo@example.com',
+};
 
 export const useAuthStore = create<AuthState>((set) => ({
   token: null,
@@ -19,13 +31,18 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (email: string, password: string) => {
     try {
       set({ isLoading: true });
-      const response = await api.request('POST', '/auth/login', { email, password });
-      set({
-        token: response?.token,
-        user: response?.user,
-        isAuthenticated: true,
-        isLoading: false,
-      });
+      
+      // Demo authentication logic
+      if (email === 'demo@example.com' && password === 'demo123') {
+        set({
+          token: 'demo-token',
+          user: DEMO_USER,
+          isAuthenticated: true,
+          isLoading: false,
+        });
+      } else {
+        throw new Error('Invalid credentials');
+      }
     } catch (error) {
       set({ isLoading: false });
       throw error;

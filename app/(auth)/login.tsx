@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Alert, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/stores/auth';
+
+const DEMO_CREDENTIALS = {
+  email: 'demo@example.com',
+  password: 'demo123',
+};
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -14,17 +19,30 @@ export default function LoginScreen() {
       await login(email, password);
       router.replace('/(tabs)');
     } catch (error) {
-      console.error('Login failed:', error);
+      Alert.alert(
+        'Login Failed',
+        'Please check your credentials and try again.'
+      );
     }
   };
 
+  const handleDemoLogin = () => {
+    setEmail(DEMO_CREDENTIALS.email);
+    setPassword(DEMO_CREDENTIALS.password);
+  };
+
   return (
-    <View className="flex-1 justify-center p-6 bg-white">
-      <Text className="text-3xl font-bold mb-8 text-center">Welcome Back</Text>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Welcome Back</Text>
+        <Text style={styles.subtitle}>
+          Sign in to continue to your account
+        </Text>
+      </View>
       
-      <View className="space-y-4">
+      <View style={styles.form}>
         <TextInput
-          className="bg-gray-100 p-4 rounded-lg"
+          style={styles.input}
           placeholder="Email"
           value={email}
           onChangeText={setEmail}
@@ -33,25 +51,112 @@ export default function LoginScreen() {
         />
         
         <TextInput
-          className="bg-gray-100 p-4 rounded-lg"
+          style={styles.input}
           placeholder="Password"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
         />
+
+        <TouchableOpacity
+          style={styles.demoButton}
+          onPress={handleDemoLogin}
+        >
+          <Text style={styles.demoButtonText}>
+            Use Demo Credentials
+          </Text>
+        </TouchableOpacity>
         
         <TouchableOpacity
-          className="bg-blue-500 p-4 rounded-lg"
+          style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
           onPress={handleLogin}
           disabled={isLoading}
         >
           {isLoading ? (
             <ActivityIndicator color="white" />
           ) : (
-            <Text className="text-white text-center font-semibold">Login</Text>
+            <Text style={styles.loginButtonText}>Login</Text>
           )}
         </TouchableOpacity>
+
+        <View style={styles.demoCredentials}>
+          <Text style={styles.demoCredentialsText}>
+            Demo Credentials:{'\n'}
+            Email: {DEMO_CREDENTIALS.email}{'\n'}
+            Password: {DEMO_CREDENTIALS.password}
+          </Text>
+        </View>
       </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 24,
+    backgroundColor: 'white',
+  },
+  header: {
+    marginBottom: 48,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    textAlign: 'center',
+    color: '#1a1a1a',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+  },
+  form: {
+    gap: 16,
+  },
+  input: {
+    backgroundColor: '#f5f5f5',
+    padding: 16,
+    borderRadius: 12,
+    fontSize: 16,
+    marginBottom: 16,
+  },
+  demoButton: {
+    backgroundColor: '#f5f5f5',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  demoButtonText: {
+    color: '#666',
+    textAlign: 'center',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  loginButton: {
+    backgroundColor: '#3b82f6',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  loginButtonDisabled: {
+    opacity: 0.7,
+  },
+  loginButtonText: {
+    color: 'white',
+    textAlign: 'center',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  demoCredentials: {
+    marginTop: 16,
+  },
+  demoCredentialsText: {
+    color: '#666',
+    textAlign: 'center',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+});
