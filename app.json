@@ -16,6 +16,9 @@
       "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
+    "android": {
+      "softwareKeyboardLayoutMode": "pan"
+    },
     "plugins": ["expo-router"],
     "experiments": {
       "typedRoutes": true

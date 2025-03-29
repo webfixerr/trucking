@@ -16,7 +16,7 @@ function useProtectedRoute(isAuthenticated: boolean) {
       router.replace('/login');
     } else if (isAuthenticated && inAuthGroup) {
       // Redirect to home if authenticated and trying to access auth pages
-      router.replace('/(tabs)');
+      router.replace('/(tabs)/home');
     }
   }, [isAuthenticated, segments]);
 }
