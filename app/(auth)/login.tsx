@@ -25,6 +25,8 @@ const DEMO_CREDENTIALS = {
   password: 'demo123',
 };
 
+const DEMO_DRIVER_CODE = '111111'; // Demo 6-digit code
+
 const { width, height } = Dimensions.get('window');
 
 export default function LoginScreen() {
@@ -37,6 +39,16 @@ export default function LoginScreen() {
   const [codeError, setCodeError] = useState('');
   const hiddenInputRef = useRef<TextInput>(null);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+
+  // New states for the trip modals
+  const [isTripQuestionModalVisible, setIsTripQuestionModalVisible] =
+    useState(false);
+  const [isNewTripModalVisible, setIsNewTripModalVisible] = useState(false);
+  const [truckMileage, setTruckMileage] = useState('');
+  const [gasolineLitres, setGasolineLitres] = useState('');
+  const [beginningKilometers, setBeginningKilometers] = useState('');
+  const [origin, setOrigin] = useState('');
+  const [destination, setDestination] = useState('');
 
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
@@ -67,7 +79,7 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     try {
       await login(email, password);
-      router.replace('/(tabs)/home');
+      router.replace('/(tabs)');
     } catch (error) {
       Alert.alert(
         'Login Failed',
@@ -105,11 +117,10 @@ export default function LoginScreen() {
 
   const handleSubmitCode = () => {
     // Replace this with your actual code validation logic
-    if (driverCode === '123456') {
-      // Code is valid, navigate or perform action
-      Alert.alert('Success', 'Code is valid!');
+    if (driverCode === DEMO_DRIVER_CODE) {
+      // Code is valid, show trip question modal
+      setIsTripQuestionModalVisible(true);
       handleCloseModal();
-      // router.push('/some-new-screen');
     } else {
       setCodeError('The code entered is not valid or has already been used.');
     }
@@ -124,8 +135,39 @@ export default function LoginScreen() {
     }
   }, [isRegisterModalVisible]);
 
+  // Trip Question Modal Handlers
+  const handleTripQuestionYes = () => {
+    setIsTripQuestionModalVisible(false);
+    setIsNewTripModalVisible(true);
+  };
+
+  const handleTripQuestionNo = () => {
+    setIsTripQuestionModalVisible(false);
+    router.replace('/(tabs)');
+  };
+
+  // New Trip Modal Handlers
+  const handleStartTrip = () => {
+    // Handle trip data and navigate
+    console.log('Trip Data:', {
+      truckMileage,
+      gasolineLitres,
+      beginningKilometers,
+      origin,
+      destination,
+    });
+    setIsNewTripModalVisible(false);
+    router.replace('/(tabs)');
+  };
+
+  const handleCloseNewTripModal = () => {
+    setIsNewTripModalVisible(false);
+    router.replace('/(tabs)');
+  };
+
   return (
     <View style={styles.container}>
+      {/* ... (Rest of your login screen code) */}
       <View style={styles.header}>
         <Text style={styles.title}>Welcome Back</Text>
         <Text style={styles.subtitle}>Sign in to continue to your account</Text>
@@ -176,7 +218,6 @@ export default function LoginScreen() {
       </View>
 
       {/* Register Modal */}
-
       <Modal
         visible={isRegisterModalVisible}
         animationType="slide"
@@ -184,6 +225,7 @@ export default function LoginScreen() {
         onRequestClose={handleCloseModal}
         statusBarTranslucent={true} // Add this line
       >
+        {/* ... (Rest of your register modal code) */}
         <View style={styles.fullScreenModalContainer}>
           <View style={styles.modalContent}>
             <Pressable onPress={handleCloseModal} style={styles.closeButton}>
@@ -245,11 +287,137 @@ export default function LoginScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Trip Question Modal */}
+      <Modal
+        visible={isTripQuestionModalVisible}
+        animationType="slide"
+        transparent={false} // Make it non-transparent
+        onRequestClose={() => setIsTripQuestionModalVisible(false)}
+        statusBarTranslucent={true}
+      >
+        <View
+          style={[styles.fullScreenModalContainer, styles.modalOuterPadding]}
+        >
+          <View style={styles.modalContent}>
+            <Pressable
+              onPress={() => setIsTripQuestionModalVisible(false)}
+              style={styles.closeButton}
+            >
+              <Ionicons name="close" size={24} color="black" />
+            </Pressable>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              style={{ flex: 1 }}
+            >
+              <View style={styles.centerContent}>
+                <View style={styles.modalTitleContainer}>
+                  <Text style={styles.modalTitle}>
+                    Are you going on a trip?
+                  </Text>
+                </View>
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    style={styles.inputModal}
+                    placeholder="Truck's Mileage"
+                    value={truckMileage}
+                    onChangeText={setTruckMileage}
+                    keyboardType="numeric"
+                  />
+                  <TextInput
+                    style={styles.inputModal}
+                    placeholder="Gasoline Litres (optional)"
+                    value={gasolineLitres}
+                    onChangeText={setGasolineLitres}
+                    keyboardType="numeric"
+                  />
+                </View>
+                <View style={styles.modalButtonsContainer}>
+                  <Pressable
+                    style={[styles.button, styles.buttonYes]}
+                    onPress={handleTripQuestionYes}
+                  >
+                    <Text style={styles.textStyle}>Yes</Text>
+                  </Pressable>
+                  <Pressable
+                    style={[styles.button, styles.buttonNo]}
+                    onPress={handleTripQuestionNo}
+                  >
+                    <Text style={styles.textStyle}>No</Text>
+                  </Pressable>
+                </View>
+              </View>
+            </KeyboardAvoidingView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* New Trip Modal */}
+      <Modal
+        visible={isNewTripModalVisible}
+        animationType="slide"
+        transparent={false} // Make it non-transparent
+        onRequestClose={handleCloseNewTripModal}
+        statusBarTranslucent={true}
+      >
+        <View
+          style={[styles.fullScreenModalContainer, styles.modalOuterPadding]}
+        >
+          <View style={styles.modalContent}>
+            <Pressable
+              onPress={handleCloseNewTripModal}
+              style={styles.closeButton}
+            >
+              <Ionicons name="close" size={24} color="black" />
+            </Pressable>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              style={{ flex: 1 }}
+            >
+              <View style={styles.centerContent}>
+                <View style={styles.modalTitleContainer}>
+                  <Text style={styles.modalTitle}>Start a new trip</Text>
+                </View>
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    style={styles.inputModal}
+                    placeholder="Beginning Kilometers (0)"
+                    value={beginningKilometers}
+                    onChangeText={setBeginningKilometers}
+                    keyboardType="numeric"
+                  />
+                  <TextInput
+                    style={styles.inputModal}
+                    placeholder="Origin (Select Origin)"
+                    value={origin}
+                    onChangeText={setOrigin}
+                  />
+                  <TextInput
+                    style={styles.inputModal}
+                    placeholder="Destination (Select Destination)"
+                    value={destination}
+                    onChangeText={setDestination}
+                  />
+                </View>
+                <View style={styles.submitButtonContainer}>
+                  <TouchableOpacity
+                    style={[styles.submitButton, styles.buttonStartTrip]}
+                    onPress={handleStartTrip}
+                  >
+                    <Text style={styles.submitButtonText}>Start Trip</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </KeyboardAvoidingView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  // ... (Rest of your styles)
   container: {
     flex: 1,
     justifyContent: 'center',
@@ -345,8 +513,8 @@ const styles = StyleSheet.create({
   closeButton: {
     position: 'absolute',
     top: 24,
-    right: 24,
-    padding: 8,
+    right: 6,
+    padding: 2,
     zIndex: 1, // Ensure it's above other content
   },
   centerContent: {
@@ -422,10 +590,12 @@ const styles = StyleSheet.create({
     width: '80%',
   },
   submitButtonContainer: {
-    position: 'absolute',
-    bottom: 24,
-    right: 24,
-    width: 'auto',
+    width: '100%',
+    position: 'relative',
+    bottom: 0,
+    right: 0,
+    paddingHorizontal: 24,
+    marginTop: 24,
   },
   submitButton: {
     backgroundColor: '#3b82f6',
@@ -436,5 +606,79 @@ const styles = StyleSheet.create({
   submitButtonText: {
     color: 'white',
     fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  // Modal styles
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 22,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  button: {
+    borderRadius: 12,
+    padding: 10,
+    elevation: 2,
+    marginHorizontal: 10,
+    width: '37%'
+  },
+  buttonYes: {
+    backgroundColor: '#2196F3',
+  },
+  buttonNo: {
+    backgroundColor: '#f44336',
+  },
+  buttonStartTrip: {
+    backgroundColor: '#4CAF50',
+    marginTop: 20,
+  },
+  textStyle: {
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: 'center',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  modalButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginTop: 20, // Add margin top to separate from inputs
+    marginBottom: 20,
+  },
+  inputModal: {
+    backgroundColor: '#f5f5f5',
+    padding: 10,
+    borderRadius: 12,
+    fontSize: 16,
+    marginBottom: 10,
+    width: '100%',
+  },
+  inputContainer: {
+    width: '80%',
+    marginBottom: 20, // Add margin bottom to separate from buttons
+  },
+  modalOuterPadding: {
+    paddingHorizontal: 24, // Add horizontal padding
   },
 });

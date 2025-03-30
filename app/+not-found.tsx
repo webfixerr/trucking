@@ -8,7 +8,7 @@ export default function NotFoundScreen() {
 
   const handleNavigateHome = () => {
     if (isAuthenticated) {
-      router.replace('/(tabs)/home');
+      router.replace('/(tabs)');
     } else {
       router.replace('/login');
     }
