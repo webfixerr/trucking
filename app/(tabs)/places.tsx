@@ -1,12 +1,21 @@
-import { View, Text } from 'react-native';
+import { StyleSheet, ScrollView } from 'react-native';
+import { tripData } from '@/lib/dummy/list';
+import TruckSummary from '@/components/TruckSummary';
+import TripList from '@/components/TripList';
 
 export default function PlacesScreen() {
   return (
-    <View className="flex-1 justify-center items-center p-6">
-      <Text className="text-2xl font-bold mb-4">Places</Text>
-      <Text className="text-gray-600 text-center">
-        Discover interesting places around you.
-      </Text>
-    </View>
+    <ScrollView style={styles.container}>
+      <TruckSummary mileage="84,502 mi" />
+      <TripList data={tripData} />
+    </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#fff',
+  },
+});

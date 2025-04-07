@@ -11,7 +11,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: '🚚 Truck X829',
+          headerTitleAlign: 'center', 
           tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
         }}
       />
