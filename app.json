@@ -19,7 +19,10 @@
     "android": {
       "softwareKeyboardLayoutMode": "pan"
     },
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router",
+      "expo-sqlite"
+    ],
     "experiments": {
       "typedRoutes": true
     }

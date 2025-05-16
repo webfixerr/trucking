@@ -7,12 +7,13 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: true,
         tabBarActiveTintColor: '#3b82f6',
-      }}>
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
           title: '🚚 Truck X829',
-          headerTitleAlign: 'center', 
+          headerTitleAlign: 'center',
           tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
         }}
       />
