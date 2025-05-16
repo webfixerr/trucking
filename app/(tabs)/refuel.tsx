@@ -1,12 +1,40 @@
-import { View, Text } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { useRefuelStore } from '@/stores/refuelStore';
+import RefuelList from '@/components/RefuelList';
 
 export default function RefuelScreen() {
+  const { refuel } = useRefuelStore();
+
   return (
-    <View className="flex-1 justify-center items-center p-6">
-      <Text className="text-2xl font-bold mb-4">Refuel</Text>
-      <Text className="text-gray-600 text-center">
-        Track your refueling history and expenses.
-      </Text>
-    </View>
+    <ScrollView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Refuel</Text>
+        <Text style={styles.subtitle}>Track your refueling history and expenses.</Text>
+      </View>
+      <RefuelList data={refuel} />
+    </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#fff',
+  },
+  header: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 4,
+  },
+});

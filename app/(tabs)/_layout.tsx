@@ -1,7 +1,21 @@
 import { Tabs } from 'expo-router';
 import { Chrome as Home, MapPin, Fuel, User } from 'lucide-react-native';
+import { useAuthStore } from '@/stores/auth';
+import { View, Text } from 'react-native';
 
 export default function TabLayout() {
+  const { isAuthenticated, isLoading } = useAuthStore();
+
+  console.log('TabLayout rendered', { isAuthenticated, isLoading });
+
+  if (!isAuthenticated || isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text>Redirecting...</Text>
+      </View>
+    );
+  }
+
   return (
     <Tabs
       screenOptions={{
