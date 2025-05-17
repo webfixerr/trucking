@@ -10,6 +10,7 @@ import { runMigrations } from '@/services/db/migrations';
 import { insertTrip } from '@/services/db/tripService';
 import { insertRefuel } from '@/services/db/refuelService';
 import { tripData, fuelData } from '@/lib/dummy/list';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 function useProtectedRoute(isAuthenticated: boolean, isAuthLoaded: boolean, isMounted: boolean) {
   const segments = useSegments();
@@ -25,6 +26,7 @@ function useProtectedRoute(isAuthenticated: boolean, isAuthLoaded: boolean, isMo
 
     const timeout = setTimeout(() => {
       const inAuthGroup = segments[0] === '(auth)';
+      console.log('Navigation decision:', { inAuthGroup, isAuthenticated });
 
       if (!isAuthenticated && !inAuthGroup) {
         console.log('Redirecting to /login');
@@ -35,7 +37,7 @@ function useProtectedRoute(isAuthenticated: boolean, isAuthLoaded: boolean, isMo
       } else {
         console.log('No redirect needed:', { inAuthGroup, isAuthenticated });
       }
-    }, 200); // Increased delay to 200ms
+    }, 300); // Increased to 300ms
 
     return () => clearTimeout(timeout);
   }, [isAuthenticated, isAuthLoaded, isMounted, segments]);
@@ -55,10 +57,7 @@ export default function RootLayout() {
   useEffect(() => {
     async function initializeApp() {
       try {
-        // Run migrations first
         runMigrations();
-
-        // Seed dummy data
         const db = require('@/services/db').openDatabase();
         const tripCount = db.getFirstSync('SELECT COUNT(*) as count FROM trips;').count;
         if (tripCount === 0) {
@@ -71,12 +70,10 @@ export default function RootLayout() {
           console.log('Seeded refuel data');
         }
 
-        // Debug tables after migrations and seeding
         debugAuthTable();
         debugTrips();
         debugRefuel();
 
-        // Load state
         await loadAuth();
         loadTrips();
         loadRefuel();
@@ -112,13 +109,13 @@ export default function RootLayout() {
   }
 
   return (
-    <>
+    <SafeAreaProvider>
       <Stack screenOptions={{ headerShown: false }} initialRouteName="(auth)">
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" options={{ presentation: 'modal' }} />
       </Stack>
       <StatusBar style="auto" />
-    </>
+    </SafeAreaProvider>
   );
 }
