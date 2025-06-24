@@ -39,9 +39,9 @@ const RefuelList: React.FC<Props> = ({ data }) => {
 const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
     marginTop: 16,
-    marginBottom: 8,
+    marginBottom: 12,
   },
   itemContainer: {
     flexDirection: 'row',

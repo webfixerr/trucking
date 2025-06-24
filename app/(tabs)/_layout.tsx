@@ -1,5 +1,11 @@
 import { Tabs } from 'expo-router';
-import { Chrome as Home, MapPin, Fuel, User } from 'lucide-react-native';
+import {
+  HomeIcon,
+  MapMarkerIcon,
+  UserIcon,
+  FuelPumpIcon,
+} from '@/components/Icons';
+
 import { useAuthStore } from '@/stores/auth';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useEffect, useState } from 'react';
@@ -47,7 +53,10 @@ export default function TabLayout() {
         },
       }}
       tabBar={(props) => {
-        console.log('Tab bar routes:', props.state.routes.map((r) => r.name));
+        console.log(
+          'Tab bar routes:',
+          props.state.routes.map((r) => r.name)
+        );
         console.log('Navigation state:', navigation.getState());
         return (
           <View
@@ -62,13 +71,39 @@ export default function TabLayout() {
           >
             {props.state.routes.map((route, index) => {
               const isFocused = props.state.index === index;
-              const routeName = route.name as 'index' | 'places' | 'refuel' | 'profile';
+              const routeName = route.name as
+                | 'index'
+                | 'places'
+                | 'refuel'
+                | 'profile';
+
               const icon = {
-                index: <Home size={24} color={isFocused ? '#3b82f6' : '#6b7280'} />,
-                places: <MapPin size={24} color={isFocused ? '#3b82f6' : '#6b7280'} />,
-                refuel: <Fuel size={24} color={isFocused ? '#3b82f6' : '#6b7280'} />,
-                profile: <User size={24} color={isFocused ? '#3b82f6' : '#6b7280'} />,
+                index: (
+                  <HomeIcon
+                    size={24}
+                    color={isFocused ? '#3b82f6' : '#6b7280'}
+                  />
+                ),
+                places: (
+                  <MapMarkerIcon
+                    size={24}
+                    color={isFocused ? '#3b82f6' : '#6b7280'}
+                  />
+                ),
+                refuel: (
+                  <FuelPumpIcon
+                    size={24}
+                    color={isFocused ? '#3b82f6' : '#6b7280'}
+                  />
+                ),
+                profile: (
+                  <UserIcon
+                    size={24}
+                    color={isFocused ? '#3b82f6' : '#6b7280'}
+                  />
+                ),
               }[routeName];
+
               const label = {
                 index: 'Home',
                 places: 'Places',
@@ -107,7 +142,10 @@ export default function TabLayout() {
         );
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Truck X829', headerTitleAlign: 'center' }} />
+      <Tabs.Screen
+        name="index"
+        options={{ title: 'Truck X829', headerTitleAlign: 'center' }}
+      />
       <Tabs.Screen name="places" options={{ title: 'Places' }} />
       <Tabs.Screen name="refuel" options={{ title: 'Refuel' }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile' }} />

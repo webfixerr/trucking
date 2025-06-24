@@ -26,7 +26,7 @@ const TruckSummary: React.FC<Props> = ({ mileage, fuelLevel }) => {
           key={index}
           style={[
             styles.squareCard,
-            cards.length === 1 ? styles.singleCard : undefined,
+            cards.length === 1 ? null : undefined,
           ]}
         >
           <Text style={styles.cardTitle}>{card.title}</Text>
@@ -49,27 +49,22 @@ const styles = StyleSheet.create({
   },
   squareCard: {
     flex: 1,
-    aspectRatio: 1,
     backgroundColor: '#f2f2f2',
     borderRadius: 12,
-    padding: 12,
+    padding: 16,
     justifyContent: 'center',
-    alignItems: 'center',
-  },
-  singleCard: {
-    flex: undefined,
-    width: 150,
+    flexWrap: 'wrap',
+    maxWidth: '48%',
   },
   cardTitle: {
-    fontSize: 14,
+    fontSize: 18,
     color: '#555',
-    marginBottom: 4,
-    textAlign: 'center',
+    marginBottom: 2,
+    fontWeight: '500',
   },
   cardValue: {
-    fontSize: 20,
+    fontSize: 28,
     fontWeight: '700',
-    textAlign: 'center',
   },
 });
 
