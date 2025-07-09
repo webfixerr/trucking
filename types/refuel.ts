@@ -1,6 +1,7 @@
 export interface Refuel {
-  id?: number; // Added for SQLite primary key
-  station: string;
-  capacity: string;
-  date: string;
+  id: string;
+  service_station: string;
+  kilometers_at_refuel: string;
+  litres_fueled: string;
+  price_per_litre: string;
 }

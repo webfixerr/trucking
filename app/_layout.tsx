@@ -2,95 +2,112 @@ import { useEffect, useState } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
-import { useAuthStore } from '@/stores/auth';
+import { useAuthStore } from '@/stores/authStore';
 import { useTripStore } from '@/stores/tripStore';
 import { useRefuelStore } from '@/stores/refuelStore';
+import { useTenantStore } from '@/stores/tenantStore';
+import { openDatabase, debugDatabase } from '@/services/db/migrations';
+import { initializeApiInterceptors } from '@/lib/api';
 import { View, Text } from 'react-native';
-import { runMigrations } from '@/services/db/migrations';
-import { insertTrip } from '@/services/db/tripService';
-import { insertRefuel } from '@/services/db/refuelService';
-import { tripData, fuelData } from '@/lib/dummy/list';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import NetInfo from '@react-native-community/netinfo';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { debugAuthTable } from '@/services/db/authService';
 
-function useProtectedRoute(isAuthenticated: boolean, isAuthLoaded: boolean, isMounted: boolean) {
+function useProtectedRoute(
+  isAuthenticated: boolean,
+  isAuthLoaded: boolean,
+  isMounted: boolean,
+  tenantDomain: string | null
+) {
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
-    console.log('useProtectedRoute called:', { isAuthenticated, isAuthLoaded, isMounted, segments });
-
     if (!isAuthLoaded || !isMounted) {
-      console.log('Waiting for auth to load or navigator to mount');
       return;
     }
 
     const timeout = setTimeout(() => {
       const inAuthGroup = segments[0] === '(auth)';
-      console.log('Navigation decision:', { inAuthGroup, isAuthenticated });
-
-      if (!isAuthenticated && !inAuthGroup) {
-        console.log('Redirecting to /login');
+      if (!tenantDomain && !inAuthGroup) {
+        router.replace('/TenantScreen');
+      } else if (!isAuthenticated && !inAuthGroup) {
         router.replace('/login');
       } else if (isAuthenticated && inAuthGroup) {
-        console.log('Redirecting to /(tabs)');
-        router.replace('/(tabs)');
-      } else {
-        console.log('No redirect needed:', { inAuthGroup, isAuthenticated });
+        router.replace('/(tabs)/places');
       }
-    }, 300); // Increased to 300ms
+    }, 300);
 
     return () => clearTimeout(timeout);
-  }, [isAuthenticated, isAuthLoaded, isMounted, segments]);
+  }, [isAuthenticated, isAuthLoaded, isMounted, tenantDomain, segments]);
 }
 
 export default function RootLayout() {
   useFrameworkReady();
-  const { isAuthenticated, loadAuth, debugAuthTable } = useAuthStore();
-  const { loadTrips, debugTrips } = useTripStore();
-  const { loadRefuel, debugRefuel } = useRefuelStore();
+  const { isAuthenticated, loadAuth } = useAuthStore();
+  const {
+    loadTrips,
+    syncPending: syncPendingTrips,
+    debugPendingTrips,
+  } = useTripStore();
+  const {
+    loadRefuel,
+    syncPending: syncPendingRefuel,
+    debugPendingRefuel,
+  } = useRefuelStore();
+  const { tenantDomain } = useTenantStore();
   const [isAuthLoaded, setIsAuthLoaded] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useProtectedRoute(isAuthenticated, isAuthLoaded, isMounted);
+  useProtectedRoute(isAuthenticated, isAuthLoaded, isMounted, tenantDomain);
 
   useEffect(() => {
     async function initializeApp() {
       try {
-        runMigrations();
-        const db = require('@/services/db').openDatabase();
-        const tripCount = db.getFirstSync('SELECT COUNT(*) as count FROM trips;').count;
-        if (tripCount === 0) {
-          tripData.forEach((trip) => insertTrip(trip));
-          console.log('Seeded trip data');
+        openDatabase(); // Initialize SQLite database
+        const authData = await loadAuth(); // Load auth data from SQLite
+        const tenant = await AsyncStorage.getItem('tenant-storage');
+        if (tenant) {
+          console.log('Tenant loaded from AsyncStorage:', tenant);
         }
-        const refuelCount = db.getFirstSync('SELECT COUNT(*) as count FROM refuel;').count;
-        if (refuelCount === 0) {
-          fuelData.forEach((refuel) => insertRefuel(refuel));
-          console.log('Seeded refuel data');
+        if (tenantDomain && authData) {
+          initializeApiInterceptors(); // Initialize API only if tenant and auth are ready
+          loadTrips();
+          loadRefuel();
         }
-
-        debugAuthTable();
-        debugTrips();
-        debugRefuel();
-
-        await loadAuth();
-        loadTrips();
-        loadRefuel();
         setIsAuthLoaded(true);
-      } catch (err) {
+
+        // Debug database state
+        debugDatabase();
+        debugAuthTable();
+        debugPendingTrips();
+        debugPendingRefuel();
+      } catch (err: any) {
         console.error('App initialization error:', err);
-        setError('Failed to initialize app');
+        setError('Failed to initialize app: ' + err.message);
         setIsAuthLoaded(true);
       }
     }
     initializeApp();
-  }, []);
+  }, [tenantDomain]);
 
   useEffect(() => {
     setIsMounted(true);
-    console.log('RootLayout mounted');
   }, []);
+
+  // Sync pending data when network is available
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      if (state.isConnected && isAuthenticated && tenantDomain) {
+        syncPendingTrips();
+        syncPendingRefuel();
+      }
+    });
+
+    return () => unsubscribe();
+  }, [isAuthenticated, tenantDomain]);
 
   if (!isAuthLoaded) {
     return (

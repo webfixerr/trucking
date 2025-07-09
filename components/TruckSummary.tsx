@@ -10,7 +10,7 @@ const TruckSummary: React.FC<Props> = ({ mileage, fuelLevel }) => {
   if (!mileage && !fuelLevel) return null;
 
   const cards = [
-    mileage && { title: 'Current Mileage', value: mileage },
+    mileage && { title: 'Current\nMileage', value: mileage },
     fuelLevel && { title: 'Fuel Level', value: fuelLevel },
   ].filter(Boolean) as { title: string; value: string }[];
 
@@ -55,6 +55,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexWrap: 'wrap',
     maxWidth: '48%',
+    wordWrap: 'break-word',
   },
   cardTitle: {
     fontSize: 18,
@@ -65,6 +66,7 @@ const styles = StyleSheet.create({
   cardValue: {
     fontSize: 28,
     fontWeight: '700',
+    marginTop: 4,
   },
 });
 

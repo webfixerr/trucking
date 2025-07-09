@@ -1,5 +1,5 @@
 import { StyleSheet, ScrollView } from 'react-native';
-import { useAuthStore } from '@/stores/auth';
+import { useAuthStore } from '@/stores/authStore';
 import { tripData, fuelData } from '@/lib/dummy/list';
 import TruckSummary from '@/components/TruckSummary';
 import TripList from '@/components/TripList';

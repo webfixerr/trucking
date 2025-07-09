@@ -1,6 +1,6 @@
 import { Link, Stack, useRouter } from 'expo-router';
 import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native';
-import { useAuthStore } from '@/stores/auth';
+import { useAuthStore } from '@/stores/authStore';
 
 export default function NotFoundScreen() {
   const router = useRouter();

@@ -2,11 +2,11 @@ import { Tabs } from 'expo-router';
 import {
   HomeIcon,
   MapMarkerIcon,
-  UserIcon,
+  SettingsIcon,
   FuelPumpIcon,
 } from '@/components/Icons';
 
-import { useAuthStore } from '@/stores/auth';
+import { useAuthStore } from '@/stores/authStore';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useEffect, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -47,7 +47,7 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: true,
-        tabBarActiveTintColor: '#3b82f6',
+        tabBarActiveTintColor: '#000000',
         tabBarStyle: {
           display: 'none', // Hide default tab bar
         },
@@ -81,34 +81,34 @@ export default function TabLayout() {
                 index: (
                   <HomeIcon
                     size={24}
-                    color={isFocused ? '#3b82f6' : '#6b7280'}
+                    color={isFocused ? '#000000' : '#6b7280'}
                   />
                 ),
                 places: (
                   <MapMarkerIcon
                     size={24}
-                    color={isFocused ? '#3b82f6' : '#6b7280'}
+                    color={isFocused ? '#000000' : '#6b7280'}
                   />
                 ),
                 refuel: (
                   <FuelPumpIcon
                     size={24}
-                    color={isFocused ? '#3b82f6' : '#6b7280'}
+                    color={isFocused ? '#000000' : '#6b7280'}
                   />
                 ),
                 profile: (
-                  <UserIcon
+                  <SettingsIcon
                     size={24}
-                    color={isFocused ? '#3b82f6' : '#6b7280'}
+                    color={isFocused ? '#000000' : '#6b7280'}
                   />
                 ),
               }[routeName];
 
               const label = {
                 index: 'Home',
-                places: 'Places',
+                places: 'Routes',
                 refuel: 'Refuel',
-                profile: 'Profile',
+                profile: 'Settings',
               }[routeName];
 
               return (
@@ -129,7 +129,7 @@ export default function TabLayout() {
                   <Text
                     style={{
                       fontSize: 12,
-                      color: isFocused ? '#3b82f6' : '#6b7280',
+                      color: isFocused ? '#000000' : '#6b7280',
                       marginTop: 4,
                     }}
                   >
@@ -144,11 +144,11 @@ export default function TabLayout() {
     >
       <Tabs.Screen
         name="index"
-        options={{ title: 'Truck X829', headerTitleAlign: 'center' }}
+        options={{ title: 'James Truck', headerTitleAlign: 'center' }}
       />
-      <Tabs.Screen name="places" options={{ title: 'Places' }} />
+      <Tabs.Screen name="places" options={{ title: 'Routes' }} />
       <Tabs.Screen name="refuel" options={{ title: 'Refuel' }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+      <Tabs.Screen name="profile" options={{ title: 'Settings' }} />
     </Tabs>
   );
 }
