@@ -49,7 +49,6 @@ export default function RootLayout() {
   const {
     loadTrips,
     syncPending: syncPendingTrips,
-    debugPendingTrips,
   } = useTripStore();
   const {
     loadRefuel,
@@ -82,7 +81,6 @@ export default function RootLayout() {
         // Debug database state
         debugDatabase();
         debugAuthTable();
-        debugPendingTrips();
         debugPendingRefuel();
       } catch (err: any) {
         console.error('App initialization error:', err);

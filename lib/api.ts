@@ -21,7 +21,7 @@ export const initializeApiInterceptors = () => {
       ? `https://${tenantDomain}/api`
       : `${APP_URL}/api`;
     api.defaults.baseURL = baseURL;
-    serviceStationApi.defaults.baseURL = baseURL; // Same baseURL for serviceStationApi
+    serviceStationApi.defaults.baseURL = baseURL;
     console.log('API baseURL updated:', baseURL);
   };
 
@@ -33,11 +33,21 @@ export const initializeApiInterceptors = () => {
     instance.interceptors.request.use(
       (config) => {
         const { token, tenant } = getAuthStore.getState();
+        console.log(
+          'Interceptor - Token:',
+          token,
+          'Tenant:',
+          tenant,
+          'URL:',
+          config.url
+        );
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
+        } else {
+          console.warn('No auth token available for request:', config.url);
         }
         if (tenant) {
-          config.headers['X-Tenant'] = tenant; // Use full tenant domain
+          config.headers['X-Tenant'] = tenant;
           console.log(
             'Request X-Tenant header set:',
             tenant,

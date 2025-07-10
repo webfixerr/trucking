@@ -122,6 +122,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     fontSize: 16,
     marginBottom: 8,
+    textAlign: 'center',
   },
   inputError: {
     borderColor: '#f44336',

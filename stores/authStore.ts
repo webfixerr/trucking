@@ -1,4 +1,4 @@
-import AsyncStorage  from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { login, logout, loadAuth } from '@/services/db/authService';
@@ -39,10 +39,15 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
             isLoading: false,
           });
-          console.log('Login successful, token and tenant set');
+          console.log(
+            'Login successful, token:',
+            response.access_token,
+            'tenant:',
+            tenant
+          );
         } catch (error: any) {
           set({ isLoading: false });
-          console.error('Login error:', error);
+          console.error('Login error:', error.message, error.response?.data);
           throw error;
         }
       },
@@ -74,7 +79,11 @@ export const useAuthStore = create<AuthState>()(
               isAuthenticated: true,
               isLoading: false,
             });
-            console.log('Auth data loaded:', authData);
+            console.log('Auth data loaded:', {
+              token: authData.access_token,
+              user: authData.user,
+              tenant: authData.tenant,
+            });
           } else {
             set({
               token: null,

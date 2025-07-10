@@ -1,14 +1,12 @@
+import { useState } from 'react';
 import {
-  StyleSheet,
-  View,
   Modal,
+  View,
   Text,
   TextInput,
-  Switch,
   TouchableOpacity,
-  Platform,
+  StyleSheet,
 } from 'react-native';
-import { useState } from 'react';
 import { useTripStore } from '@/stores/tripStore';
 
 interface StartTripModalProps {
@@ -20,33 +18,32 @@ export default function StartTripModal({
   visible,
   onClose,
 }: StartTripModalProps) {
-  const [distanceUnit, setDistanceUnit] = useState<'km' | 'miles'>('km');
-  const [beginningDistance, setBeginningDistance] = useState('');
+  const { addTrip, setJourneyStarted } = useTripStore();
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
-  const [error, setError] = useState('');
-  const { addTrip } = useTripStore();
+  const [beginningKilometers, setBeginningKilometers] = useState('');
 
   const handleStartTrip = async () => {
-    if (!beginningDistance || !origin || !destination) {
-      setError('Please fill in all fields');
+    if (!origin || !destination || !beginningKilometers) {
+      alert('Please fill all fields');
       return;
     }
-
     try {
-      setError('');
       await addTrip({
         origin,
         destination,
-        beginning_kilometers: beginningDistance,
-        distance_unit: distanceUnit,
+        beginning_kilometers: beginningKilometers,
+        started_at: new Date().toISOString(),
+        active: true,
+        end_notification_sent: true,
       });
-      setBeginningDistance('');
+      setJourneyStarted(true);
       setOrigin('');
       setDestination('');
+      setBeginningKilometers('');
       onClose();
-    } catch (error: any) {
-      setError('Failed to start trip. Data saved for syncing.');
+    } catch (error) {
+      alert('Failed to start trip. Data saved for syncing.');
     }
   };
 
@@ -57,90 +54,46 @@ export default function StartTripModal({
       visible={visible}
       onRequestClose={onClose}
     >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Start New Trip</Text>
+      <View style={styles.centeredView}>
+        <View style={styles.modalView}>
+          <Text style={styles.modalTitle}>Start New Journey</Text>
 
-          {/* Distance Unit Toggle */}
-          <View style={styles.toggleContainer}>
-            <Text style={styles.toggleLabel}>Distance Unit:</Text>
-            <View style={styles.toggleSwitch}>
-              <Text
-                style={[
-                  styles.toggleText,
-                  distanceUnit === 'km' && styles.toggleTextActive,
-                ]}
-              >
-                Kilometers
-              </Text>
-              <Switch
-                value={distanceUnit === 'miles'}
-                onValueChange={(value) =>
-                  setDistanceUnit(value ? 'miles' : 'km')
-                }
-                trackColor={{ false: '#767577', true: '#81b0ff' }}
-                thumbColor={distanceUnit === 'miles' ? '#f5dd4b' : '#f4f3f4'}
-              />
-              <Text
-                style={[
-                  styles.toggleText,
-                  distanceUnit === 'miles' && styles.toggleTextActive,
-                ]}
-              >
-                Miles
-              </Text>
-            </View>
-          </View>
-
-          {/* Beginning Distance Input */}
-          <Text style={styles.inputLabel}>
-            Beginning {distanceUnit === 'km' ? 'Kilometers' : 'Miles'}
-          </Text>
+          <Text style={styles.label}>Origin</Text>
           <TextInput
             style={styles.input}
-            placeholder={`Enter distance in ${distanceUnit}`}
-            keyboardType="numeric"
-            value={beginningDistance}
-            onChangeText={setBeginningDistance}
-          />
-
-          {/* Origin Input */}
-          <Text style={styles.inputLabel}>Origin</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter origin location"
             value={origin}
             onChangeText={setOrigin}
+            placeholder="Enter origin"
           />
-
-          {/* Destination Input */}
-          <Text style={styles.inputLabel}>Destination</Text>
+          <Text style={styles.label}>Destination</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter destination location"
             value={destination}
             onChangeText={setDestination}
+            placeholder="Enter destination"
           />
-
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-          {/* Start Trip Button */}
-          <TouchableOpacity
-            style={[styles.customButton, styles.modalButton]}
-            onPress={handleStartTrip}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.buttonText}>Start Trip</Text>
-          </TouchableOpacity>
-
-          {/* Cancel Button */}
-          <TouchableOpacity
-            style={[styles.customButton, styles.cancelButton]}
-            onPress={onClose}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.buttonText}>Cancel</Text>
-          </TouchableOpacity>
+          <Text style={styles.label}>Beginning Kilometers</Text>
+          <TextInput
+            style={styles.input}
+            value={beginningKilometers}
+            onChangeText={setBeginningKilometers}
+            placeholder="Enter beginning kilometers"
+            keyboardType="numeric"
+          />
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={[styles.button, styles.cancelButton]}
+              onPress={onClose}
+            >
+              <Text style={styles.buttonText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.button, styles.submitButton]}
+              onPress={handleStartTrip}
+            >
+              <Text style={styles.buttonText}>Start Trip</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </Modal>
@@ -148,95 +101,69 @@ export default function StartTripModal({
 }
 
 const styles = StyleSheet.create({
-  modalOverlay: {
+  centeredView: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+  modalView: {
+    backgroundColor: 'white',
+    borderRadius: 20,
     padding: 20,
     width: '90%',
-    maxWidth: 400,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 5,
-      },
-    }),
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
   modalTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    marginBottom: 20,
-    textAlign: 'center',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
   },
-  toggleContainer: {
-    marginBottom: 20,
-  },
-  toggleLabel: {
+  label: {
+    alignSelf: 'flex-start',
     fontSize: 16,
     fontWeight: '500',
-    marginBottom: 8,
-  },
-  toggleSwitch: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: 150,
-  },
-  toggleText: {
-    fontSize: 14,
-    color: '#767577',
-  },
-  toggleTextActive: {
-    color: '#000',
-    fontWeight: '600',
-  },
-  inputLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 8,
+    marginBottom: 5,
   },
   input: {
+    width: '100%',
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 8,
     padding: 10,
-    marginBottom: 16,
+    marginBottom: 15,
     fontSize: 16,
   },
-  errorText: {
-    color: '#f44336',
-    fontSize: 12,
-    textAlign: 'center',
-    marginBottom: 10,
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 20,
   },
-  customButton: {
-    backgroundColor: '#000',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    justifyContent: 'center',
+  button: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
     alignItems: 'center',
-  },
-  buttonText: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: '500',
-  },
-  modalButton: {
-    marginTop: 10,
+    marginHorizontal: 5,
   },
   cancelButton: {
-    backgroundColor: '#767577',
-    marginTop: 10,
+    backgroundColor: '#ff4d4d',
+  },
+  submitButton: {
+    backgroundColor: '#000',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '500',
   },
 });

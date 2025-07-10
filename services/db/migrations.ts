@@ -41,9 +41,12 @@ function initializeDatabase() {
       dbInstance!.runSync(`
         CREATE TABLE IF NOT EXISTS pending_trips (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          starting_point TEXT,
-          ending_point TEXT,
-          starting_kilometers TEXT,
+          origin TEXT,
+          destination TEXT,
+          beginning_kilometers TEXT,
+          started_at TEXT,
+          active INTEGER,
+          end_notification_sent INTEGER,
           created_at TEXT
         );
       `);
