@@ -103,6 +103,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     width: '90%',
     maxWidth: 400,
+    paddingHorizontal: 16,
   },
   input: {
     borderWidth: 1,

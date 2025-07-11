@@ -1,22 +1,19 @@
 import { create } from 'zustand';
 import { openDatabase } from '@/services/db/migrations';
-import api from '@/lib/api';
-
-interface Refuel {
-  id: string;
-  service_station_id: string;
-  kilometers_at_refuel: string;
-  litres_fueled: string;
-  price_per_litre: string;
-  created_at: string;
-}
+import { Refuel } from '@/types/refuel';
+import {
+  fetchRefuel,
+  addRefuel,
+  syncPendingRefuel,
+} from '@/services/db/refuelService';
+import { useServiceStationStore } from './serviceStationStore';
 
 interface RefuelState {
   refuelLogs: Refuel[];
   isLoading: boolean;
-  loadRefuel: () => void;
-  addRefuel: (refuel: Omit<Refuel, 'id' | 'created_at'>) => void;
-  syncPending: () => void;
+  loadRefuel: () => Promise<void>;
+  addRefuel: (refuel: Omit<Refuel, 'id' | 'created_at'>) => Promise<void>;
+  syncPending: () => Promise<void>;
   debugPendingRefuel: () => void;
 }
 
@@ -24,69 +21,32 @@ export const useRefuelStore = create<RefuelState>((set, get) => ({
   refuelLogs: [],
   isLoading: false,
 
-  loadRefuel: () => {
+  loadRefuel: async () => {
     set({ isLoading: true });
     try {
-      // Load from API
-      try {
-        api.get('/refueling-logs').then((response) => {
-          const apiRefuels = response.data.map((refuel: any) => ({
-            id: refuel.id.toString(),
-            service_station_id: refuel.service_station_id,
-            kilometers_at_refuel: refuel.kilometers_at_refuel,
-            litres_fueled: refuel.litres_fueled,
-            price_per_litre: refuel.price_per_litre,
-            created_at: refuel.created_at,
-          }));
-          set({ refuelLogs: apiRefuels });
-          console.log('Refuel loaded from API:', apiRefuels.length);
-        });
-      } catch (error) {
-        console.error('Error fetching refuel from API:', error);
-      }
-
-      // Load pending refuels from SQLite
-      try {
-        const db = openDatabase();
-        db.withTransactionSync(() => {
-          try {
-            const pendingRefuels = db.getAllSync<Refuel>(
-              `SELECT id, service_station_id, kilometers_at_refuel, litres_fueled, price_per_litre, created_at FROM pending_refuel;`
-            );
-            set((state) => ({
-              refuelLogs: [...state.refuelLogs, ...pendingRefuels],
-            }));
-            console.log(
-              'Pending refuels loaded from SQLite:',
-              pendingRefuels.length
-            );
-          } catch (error) {
-            console.error('Error querying pending_refuel table:', error);
-            // Ensure table exists
-            db.runSync(`
-              CREATE TABLE IF NOT EXISTS pending_refuel (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                service_station_id TEXT,
-                kilometers_at_refuel TEXT,
-                litres_fueled TEXT,
-                price_per_litre TEXT,
-                created_at TEXT
-              );
-            `);
-            console.log('Pending refuel table recreated');
-          }
-        });
-      } catch (error) {
-        console.error('Error loading pending refuels from SQLite:', error);
-      }
+      const apiRefuels = await fetchRefuel();
+      set({ refuelLogs: apiRefuels });
+      console.log('Refuel loaded from API:', apiRefuels.length, apiRefuels);
+    } catch (error) {
+      console.error('Error loading refuels:', error);
+      set({ refuelLogs: [] });
     } finally {
       set({ isLoading: false });
     }
   },
 
-  addRefuel: (refuel: Omit<Refuel, 'id' | 'created_at'>) => {
+  addRefuel: async (refuel: Omit<Refuel, 'id' | 'created_at'>) => {
+    const created_at = new Date().toISOString().replace('T', ' ').slice(0, 19);
     try {
-      const created_at = new Date().toISOString();
+      const newRefuel = await addRefuel(refuel);
+      if (newRefuel) {
+        set((state) => ({
+          refuelLogs: [...state.refuelLogs, newRefuel],
+        }));
+        console.log('Refuel added via API:', newRefuel);
+      }
+    } catch (error: any) {
+      console.error('Error adding refuel:', error);
       const db = openDatabase();
       db.withTransactionSync(() => {
         db.runSync(
@@ -100,50 +60,22 @@ export const useRefuelStore = create<RefuelState>((set, get) => ({
           ]
         );
       });
-      console.log('Refuel added to SQLite:', refuel);
       set((state) => ({
         refuelLogs: [
           ...state.refuelLogs,
-          { ...refuel, id: 'pending-' + Date.now(), created_at },
+          { ...refuel, id: `pending-${Date.now()}`, created_at },
         ],
       }));
-    } catch (error) {
-      console.error('Error adding refuel to SQLite:', error);
+      console.log('Refuel added to SQLite:', { ...refuel, created_at });
       throw error;
     }
   },
 
-  syncPending: () => {
+  syncPending: async () => {
     try {
-      const db = openDatabase();
-      db.withTransactionSync(() => {
-        const pendingRefuels = db.getAllSync<Refuel>(
-          `SELECT id, service_station_id, kilometers_at_refuel, litres_fueled, price_per_litre, created_at FROM pending_refuel;`
-        );
-        if (pendingRefuels.length === 0) return;
-
-        for (const refuel of pendingRefuels) {
-          try {
-            api
-              .post('/refueling-logs', {
-                service_station_id: refuel.service_station_id,
-                kilometers_at_refuel: refuel.kilometers_at_refuel,
-                litres_fueled: refuel.litres_fueled,
-                price_per_litre: refuel.price_per_litre,
-                created_at: refuel.created_at,
-              })
-              .then(() => {
-                db.runSync(`DELETE FROM pending_refuel WHERE id = ?;`, [
-                  refuel.id,
-                ]);
-                console.log('Synced refuel:', refuel.id);
-              });
-          } catch (error) {
-            console.error('Error syncing refuel:', error);
-          }
-        }
-      });
-      get().loadRefuel();
+      await syncPendingRefuel();
+      await get().loadRefuel();
+      console.log('Pending refuels synced');
     } catch (error) {
       console.error('Error syncing pending refuels:', error);
     }

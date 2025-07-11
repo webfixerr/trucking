@@ -25,17 +25,19 @@ export const useServiceStationStore = create<ServiceStationState>((set) => ({
   loadServiceStations: async () => {
     const serviceStations = await fetchServiceStations();
     set({ serviceStations });
-    console.log('Service stations loaded from API:', serviceStations.length);
+    console.log(
+      'Service stations loaded from API:',
+      serviceStations.length,
+      serviceStations
+    );
   },
   addServiceStation: async (station) => {
     const newStation = await addServiceStation(station);
     if (newStation) {
-      const serviceStations = await fetchServiceStations();
-      set({ serviceStations });
-      console.log(
-        'Service station added and list refreshed:',
-        serviceStations.length
-      );
+      set((state) => ({
+        serviceStations: [...state.serviceStations, newStation],
+      }));
+      console.log('Service station added:', newStation);
       return newStation;
     }
     return null;

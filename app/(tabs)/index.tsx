@@ -1,4 +1,4 @@
-import { StyleSheet, ScrollView } from 'react-native';
+import { StyleSheet, ScrollView, Text } from 'react-native';
 import { useAuthStore } from '@/stores/authStore';
 import { tripData, fuelData } from '@/lib/dummy/list';
 import TruckSummary from '@/components/TruckSummary';
@@ -13,8 +13,9 @@ export default function HomeScreen() {
   return (
     <ScrollView style={styles.container}>
       <TruckSummary mileage="84,502 mi" fuelLevel="65%" />
-      <TripList data={tripData} />
-      <RefuelList data={fuelData} />
+      <Text style={styles.title}>Home page</Text>
+      {/* <TripList data={tripData} />
+      <RefuelList data={fuelData} /> */}
     </ScrollView>
   );
 }
@@ -24,5 +25,11 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     backgroundColor: '#fff',
+  },
+  title: {
+    textAlign: 'center',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginVertical: 16,
   },
 });

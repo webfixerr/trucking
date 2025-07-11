@@ -7,161 +7,17 @@ import {
   TouchableOpacity,
   Platform,
   ActivityIndicator,
-  Switch,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useState, useEffect } from 'react';
 import { useRefuelStore } from '@/stores/refuelStore';
 import { useServiceStationStore } from '@/stores/serviceStationStore';
 import { ServiceStation } from '@/types/serviceStation';
+import AddServiceStationModal from '@/components/AddServiceStationModal';
 
 interface AddRefuelModalProps {
   visible: boolean;
   onClose: () => void;
-}
-
-interface AddServiceStationModalProps {
-  visible: boolean;
-  onClose: () => void;
-  onStationAdded: (stationId: string) => void;
-}
-
-function AddServiceStationModal({
-  visible,
-  onClose,
-  onStationAdded,
-}: AddServiceStationModalProps) {
-  const [name, setName] = useState('');
-  const [location, setLocation] = useState('');
-  const [fuelPrice, setFuelPrice] = useState('');
-  const [rating, setRating] = useState('');
-  const [isGlobal, setIsGlobal] = useState(false);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { addServiceStation } = useServiceStationStore();
-
-  const handleAddServiceStation = async () => {
-    if (!name || !location || !fuelPrice || !rating) {
-      setError('Please fill in all fields');
-      return;
-    }
-
-    const ratingNum = parseFloat(rating);
-    const fuelPriceNum = parseFloat(fuelPrice);
-    if (isNaN(ratingNum) || ratingNum < 1 || ratingNum > 5) {
-      setError('Rating must be between 1 and 5');
-      return;
-    }
-    if (isNaN(fuelPriceNum) || fuelPriceNum <= 0) {
-      setError('Fuel price must be a positive number');
-      return;
-    }
-
-    try {
-      setError('');
-      setLoading(true);
-      const newStation = await addServiceStation({
-        name,
-        location,
-        fuel_price: fuelPriceNum.toFixed(2),
-        rating: ratingNum.toFixed(1),
-        is_global: isGlobal,
-      });
-      setLoading(false);
-      if (newStation) {
-        onStationAdded(newStation.id);
-        setName('');
-        setLocation('');
-        setFuelPrice('');
-        setRating('');
-        setIsGlobal(false);
-        onClose();
-      }
-    } catch (error: any) {
-      setLoading(false);
-      setError('Failed to add service station. Data saved for syncing.');
-    }
-  };
-
-  return (
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={visible}
-      onRequestClose={onClose}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Add New Service Station</Text>
-
-          <Text style={styles.inputLabel}>Name</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter station name"
-            value={name}
-            onChangeText={setName}
-          />
-
-          <Text style={styles.inputLabel}>Location</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter location"
-            value={location}
-            onChangeText={setLocation}
-          />
-
-          <Text style={styles.inputLabel}>Fuel Price ($/gal)</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter fuel price"
-            keyboardType="numeric"
-            value={fuelPrice}
-            onChangeText={setFuelPrice}
-          />
-
-          <Text style={styles.inputLabel}>Rating (1-5)</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter rating"
-            keyboardType="numeric"
-            value={rating}
-            onChangeText={setRating}
-          />
-
-          <View style={styles.toggleContainer}>
-            <Text style={styles.toggleLabel}>Global Station:</Text>
-            <Switch
-              value={isGlobal}
-              onValueChange={setIsGlobal}
-              trackColor={{ false: '#767577', true: '#81b0ff' }}
-              thumbColor={isGlobal ? '#f5dd4b' : '#f4f3f4'}
-            />
-          </View>
-
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
-          {loading ? <ActivityIndicator size="small" color="#0000ff" /> : null}
-
-          <TouchableOpacity
-            style={[styles.customButton, styles.modalButton]}
-            onPress={handleAddServiceStation}
-            activeOpacity={0.7}
-            disabled={loading}
-          >
-            <Text style={styles.buttonText}>Add Station</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.customButton, styles.cancelButton]}
-            onPress={onClose}
-            activeOpacity={0.7}
-            disabled={loading}
-          >
-            <Text style={styles.buttonText}>Cancel</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </Modal>
-  );
 }
 
 export default function AddRefuelModal({
@@ -203,11 +59,11 @@ export default function AddRefuelModal({
       return;
     }
     if (isNaN(litresNum) || litresNum <= 0) {
-      setError('Gallons fueled must be a positive number');
+      setError('Litres fueled must be a positive number');
       return;
     }
     if (isNaN(priceNum) || priceNum <= 0) {
-      setError('Price per gallon must be a positive number');
+      setError('Price per litre must be a positive number');
       return;
     }
 
@@ -217,7 +73,7 @@ export default function AddRefuelModal({
       await addRefuel({
         service_station_id: serviceStationId,
         kilometers_at_refuel: kilometersNum.toFixed(2),
-        litres_fueled: litresNum.toFixed(2), // Sent as gallons
+        litres_fueled: litresNum.toFixed(2),
         price_per_litre: priceNum.toFixed(2),
       });
       setLoading(false);
@@ -234,7 +90,7 @@ export default function AddRefuelModal({
 
   const handleStationAdded = (stationId: string) => {
     setServiceStationId(stationId);
-    loadServiceStations(); // Refresh dropdown
+    setAddStationModalVisible(false);
   };
 
   return (
@@ -248,7 +104,6 @@ export default function AddRefuelModal({
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>Add Refuel</Text>
 
-          {/* Service Station Picker */}
           <Text style={styles.inputLabel}>Service Station</Text>
           <View style={styles.pickerContainer}>
             <Picker
@@ -274,7 +129,6 @@ export default function AddRefuelModal({
             </TouchableOpacity>
           </View>
 
-          {/* Kilometers at Refuel Input */}
           <Text style={styles.inputLabel}>Kilometers at Refuel</Text>
           <TextInput
             style={styles.input}
@@ -284,21 +138,19 @@ export default function AddRefuelModal({
             onChangeText={setKilometersAtRefuel}
           />
 
-          {/* Gallons Fueled Input */}
-          <Text style={styles.inputLabel}>Gallons Fueled</Text>
+          <Text style={styles.inputLabel}>Litres Fueled</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter gallons fueled"
+            placeholder="Enter litres fueled"
             keyboardType="numeric"
             value={litresFueled}
             onChangeText={setLitresFueled}
           />
 
-          {/* Price per Gallon Input */}
-          <Text style={styles.inputLabel}>Price per Gallon</Text>
+          <Text style={styles.inputLabel}>Price per Litre</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter price per gallon"
+            placeholder="Enter price per litre"
             keyboardType="numeric"
             value={pricePerLitre}
             onChangeText={setPricePerLitre}
@@ -307,7 +159,6 @@ export default function AddRefuelModal({
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
           {loading ? <ActivityIndicator size="small" color="#0000ff" /> : null}
 
-          {/* Add Refuel Button */}
           <TouchableOpacity
             style={[styles.customButton, styles.modalButton]}
             onPress={handleAddRefuel}
@@ -317,7 +168,6 @@ export default function AddRefuelModal({
             <Text style={styles.buttonText}>Add Refuel</Text>
           </TouchableOpacity>
 
-          {/* Cancel Button */}
           <TouchableOpacity
             style={[styles.customButton, styles.cancelButton]}
             onPress={onClose}
@@ -398,16 +248,6 @@ const styles = StyleSheet.create({
   addStationButtonText: {
     color: '#007AFF',
     fontSize: 14,
-    fontWeight: '500',
-  },
-  toggleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  toggleLabel: {
-    fontSize: 16,
     fontWeight: '500',
   },
   errorText: {

@@ -1,14 +1,15 @@
-import { openDatabase } from './index';
+import { openDatabase } from './migrations';
 import { Refuel } from '@/types/refuel';
 import api from '@/lib/api';
 
 export function transformToRefuel(refuel: any): Refuel {
   return {
-    id: refuel.id,
-    service_station: refuel.service_station,
+    id: refuel.id.toString(),
+    service_station_id: refuel.service_station_id.toString(),
     kilometers_at_refuel: refuel.kilometers_at_refuel,
     litres_fueled: refuel.litres_fueled,
     price_per_litre: refuel.price_per_litre,
+    created_at: refuel.created_at,
   };
 }
 
@@ -19,19 +20,27 @@ export function transformToRefuelRequest(refuel: {
   price_per_litre: string;
 }): any {
   return {
-    service_station_id: refuel.service_station_id,
-    kilometers_at_refuel: refuel.kilometers_at_refuel,
-    litres_fueled: refuel.litres_fueled,
-    price_per_litre: refuel.price_per_litre,
+    service_station_id: parseInt(refuel.service_station_id),
+    kilometers_at_refuel: parseFloat(refuel.kilometers_at_refuel),
+    litres_fueled: parseFloat(refuel.litres_fueled),
+    price_per_litre: parseFloat(refuel.price_per_litre),
   };
 }
 
 export async function fetchRefuel(): Promise<Refuel[]> {
   try {
-    const response = await api.get('/refueling-logs');
+    const response = await api.get('/refueling-logs', {
+      headers: { Accept: 'application/json' },
+    });
     return response.data.map(transformToRefuel);
-  } catch (error) {
-    console.error('Error fetching refuel from API:', error);
+  } catch (error: any) {
+    console.error('Error fetching refuel from API:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      headers: error.config?.headers,
+      url: error.config?.url,
+    });
     return [];
   }
 }
@@ -43,81 +52,77 @@ export async function addRefuel(refuel: {
   price_per_litre: string;
 }): Promise<Refuel | null> {
   const db = openDatabase();
+  const created_at = new Date().toISOString().replace('T', ' ').slice(0, 19);
   try {
+    const config = { headers: { Accept: 'application/json' } };
+    console.log('Sending POST request to /refueling-logs', {
+      url: '/refueling-logs',
+      headers: config.headers,
+      data: transformToRefuelRequest(refuel),
+    });
     const response = await api.post(
       '/refueling-logs',
-      transformToRefuelRequest(refuel)
+      transformToRefuelRequest(refuel),
+      config
     );
     return transformToRefuel(response.data);
   } catch (error: any) {
-    console.error('Error posting refuel:', error);
-    db.runSync(
-      'INSERT INTO pending_refuel (service_station_id, kilometers_at_refuel, litres_fueled, price_per_litre, created_at) VALUES (?, ?, ?, ?, ?);',
-      [
-        refuel.service_station_id,
-        refuel.kilometers_at_refuel,
-        refuel.litres_fueled,
-        refuel.price_per_litre,
-        new Date().toISOString(),
-      ]
-    );
-    console.log('Refuel stored in pending_refuel:', refuel);
+    console.error('Error posting refuel:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      headers: error.config?.headers,
+      url: error.config?.url,
+    });
+    db.withTransactionSync(() => {
+      db.runSync(
+        'INSERT INTO pending_refuel (service_station_id, kilometers_at_refuel, litres_fueled, price_per_litre, created_at) VALUES (?, ?, ?, ?, ?);',
+        [
+          refuel.service_station_id,
+          refuel.kilometers_at_refuel,
+          refuel.litres_fueled,
+          refuel.price_per_litre,
+          created_at,
+        ]
+      );
+    });
+    console.log('Refuel stored in pending_refuel:', { ...refuel, created_at });
     throw error;
   }
 }
 
 export async function syncPendingRefuel(): Promise<void> {
   const db = openDatabase();
-  const pendingRefuel = db.getAllSync<{
+  const pendingRefuels = db.getAllSync<{
     id: number;
     service_station_id: string;
     kilometers_at_refuel: string;
     litres_fueled: string;
     price_per_litre: string;
+    created_at: string;
   }>('SELECT * FROM pending_refuel;');
 
-  for (const refuel of pendingRefuel) {
+  for (const refuel of pendingRefuels) {
     try {
       const response = await api.post(
         '/refueling-logs',
-        transformToRefuelRequest(refuel)
+        transformToRefuelRequest(refuel),
+        {
+          headers: { Accept: 'application/json' },
+        }
       );
       console.log('Synced refuel:', response.data);
-      db.runSync('DELETE FROM pending_refuel WHERE id = ?;', [refuel.id]);
-    } catch (error) {
-      console.error('Error syncing refuel:', error);
+      db.withTransactionSync(() => {
+        db.runSync('DELETE FROM pending_refuel WHERE id = ?;', [refuel.id]);
+      });
+    } catch (error: any) {
+      console.error('Error syncing refuel:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        headers: error.config?.headers,
+        url: error.config?.url,
+      });
     }
   }
 }
-
-// Commented for future use
-/*
-export async function getRefuelById(id: string): Promise<Refuel | null> {
-  try {
-    const response = await api.get(`/refueling-logs/${id}`);
-    return transformToRefuel(response.data);
-  } catch (error) {
-    console.error(`Error fetching refuel ${id}:`, error);
-    return null;
-  }
-}
-
-export async function updateRefuel(id: string, data: Partial<Refuel>): Promise<Refuel | null> {
-  try {
-    const response = await api.patch(`/refueling-logs/${id}`, data);
-    return transformToRefuel(response.data);
-  } catch (error) {
-    console.error(`Error updating refuel ${id}:`, error);
-    return null;
-  }
-}
-
-export async function deleteRefuel(id: string): Promise<void> {
-  try {
-    await api.delete(`/refueling-logs/${id}`);
-    console.log(`Refuel ${id} deleted`);
-  } catch (error) {
-    console.error(`Error deleting refuel ${id}:`, error);
-  }
-}
-*/

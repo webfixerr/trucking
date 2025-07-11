@@ -2,10 +2,9 @@ import { Tabs } from 'expo-router';
 import {
   HomeIcon,
   MapMarkerIcon,
-  SettingsIcon,
   FuelPumpIcon,
+  SettingsIcon,
 } from '@/components/Icons';
-
 import { useAuthStore } from '@/stores/authStore';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useEffect, useState } from 'react';
@@ -13,9 +12,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NavigationProp } from '@react-navigation/native';
 
-// Define the route param list for the parent Stack navigator
 type RootParamList = {
-  '(tabs)': { screen?: 'index' | 'places' | 'refuel' | 'profile' };
+  '(tabs)': {
+    screen?: 'index' | 'places' | 'refuel' | 'stations' | 'profile';
+  };
   '(auth)': undefined;
   '+not-found': undefined;
 };
@@ -49,7 +49,7 @@ export default function TabLayout() {
         headerShown: true,
         tabBarActiveTintColor: '#000000',
         tabBarStyle: {
-          display: 'none', // Hide default tab bar
+          display: 'none',
         },
       }}
       tabBar={(props) => {
@@ -75,6 +75,7 @@ export default function TabLayout() {
                 | 'index'
                 | 'places'
                 | 'refuel'
+                | 'stations'
                 | 'profile';
 
               const icon = {
@@ -96,6 +97,12 @@ export default function TabLayout() {
                     color={isFocused ? '#000000' : '#6b7280'}
                   />
                 ),
+                stations: (
+                  <FuelPumpIcon
+                    size={24}
+                    color={isFocused ? '#000000' : '#6b7280'}
+                  />
+                ),
                 profile: (
                   <SettingsIcon
                     size={24}
@@ -108,6 +115,7 @@ export default function TabLayout() {
                 index: 'Home',
                 places: 'Routes',
                 refuel: 'Refuel',
+                stations: 'Stations',
                 profile: 'Settings',
               }[routeName];
 
@@ -148,6 +156,7 @@ export default function TabLayout() {
       />
       <Tabs.Screen name="places" options={{ title: 'Routes' }} />
       <Tabs.Screen name="refuel" options={{ title: 'Refuel' }} />
+      <Tabs.Screen name="stations" options={{ title: 'Service Stations' }} />
       <Tabs.Screen name="profile" options={{ title: 'Settings' }} />
     </Tabs>
   );
