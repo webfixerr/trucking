@@ -12,9 +12,8 @@
     "lint": "expo lint"
   },
   "dependencies": {
-    "@expo/cli": "0.18.29",
     "@expo/config-plugins": "~10.1.1",
-    "@expo/metro-config": "~0.20.0",
+    "@expo/metro-config": "^0.20.17",
     "@expo/prebuild-config": "~9.0.0",
     "@expo/vector-icons": "^14.1.0",
     "@react-native-async-storage/async-storage": "2.1.2",
@@ -62,5 +61,17 @@
     "@types/react": "~19.0.10",
     "tailwindcss": "^3.4.1",
     "typescript": "~5.8.3"
+  },
+  "expo": {
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "exclude": [
+          "react-native-sqlite-storage",
+          "react-icons",
+          "react-native-searchable-dropdown"
+        ],
+        "listUnknownPackages": false
+      }
+    }
   }
 }
