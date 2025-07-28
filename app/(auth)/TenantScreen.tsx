@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { useTenantStore } from '@/stores/tenantStore';
 import axios from 'axios';
 import { APP_URL } from '@/lib/api';
+import { Image } from 'expo-image';
 
 export default function TenantScreen() {
   const router = useRouter();
@@ -70,6 +71,11 @@ export default function TenantScreen() {
       style={styles.container}
     >
       <View style={styles.form}>
+        <Image
+          source={require('@/assets/images/logo.png')}
+          style={styles.logo}
+          resizeMode="cover"
+        />
         <Text style={styles.title}>Find Workspace</Text>
         <TextInput
           style={[styles.input, error ? styles.inputError : null]}
@@ -109,6 +115,10 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: 16,
+  },
+  logo: {
+    width: 300,
+    height: 100,
   },
   title: {
     fontSize: 24,

@@ -13,6 +13,7 @@ import { router } from 'expo-router';
 import { initializeApiInterceptors } from '@/lib/api';
 
 import { FontAwesome } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -50,6 +51,11 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
+      <Image
+        source={require('@/assets/images/logo.png')}
+        style={styles.logo}
+        resizeMode='cover'
+      />
       <Text style={styles.title}>Login</Text>
 
       <Text style={styles.label}>Email</Text>
@@ -112,6 +118,10 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '600',
     marginBottom: 20,
+  },
+  logo: {
+    width: 300,
+    height: 100,
   },
   label: {
     fontSize: 16,

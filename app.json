@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Bolt Expo NativeWind",
-    "slug": "bolt-expo-nativewind",
+    "name": "RoadFuel",
+    "slug": "roadfuel",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -15,9 +15,10 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.webfixerr.boltexpo",
+      "bundleIdentifier": "com.webfixerr.roadfuel",
       "buildNumber": "1.0.0",
       "infoPlist": {
+        "CFBundleDisplayName": "RoadFuel",
         "NSLocationWhenInUseUsageDescription": "This app needs your location to track your journey.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs your location to track your journey in the background.",
         "UIBackgroundModes": ["location"]
@@ -25,10 +26,10 @@
     },
     "android": {
       "softwareKeyboardLayoutMode": "pan",
-      "package": "com.webfixerr.boltexpo",
+      "package": "com.webfixerr.roadfuel",
       "versionCode": 1,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#ffffff"
       },
       "permissions": [
