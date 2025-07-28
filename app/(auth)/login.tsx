@@ -12,11 +12,14 @@ import { useTenantStore } from '@/stores/tenantStore';
 import { router } from 'expo-router';
 import { initializeApiInterceptors } from '@/lib/api';
 
+import { FontAwesome } from '@expo/vector-icons';
+
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuthStore();
   const { tenantDomain } = useTenantStore();
 
@@ -34,8 +37,8 @@ export default function LoginScreen() {
     try {
       setError('');
       setLoading(true);
-      await login(email, password, tenantDomain); // Use full tenantDomain
-      initializeApiInterceptors(); // Reinitialize API with tenant
+      await login(email, password, tenantDomain);
+      initializeApiInterceptors();
       setLoading(false);
       router.replace('/(tabs)/places');
     } catch (error: any) {
@@ -53,6 +56,7 @@ export default function LoginScreen() {
       <TextInput
         style={styles.input}
         placeholder="Enter email"
+        placeholderTextColor="#888"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
@@ -60,14 +64,27 @@ export default function LoginScreen() {
       />
 
       <Text style={styles.label}>Password</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-
+      <View style={styles.passwordContainer}>
+        <TextInput
+          style={styles.passwordInput}
+          placeholder="Enter password"
+          placeholderTextColor="#888"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry={!showPassword}
+        />
+        <TouchableOpacity
+          style={styles.eyeIcon}
+          onPress={() => setShowPassword(!showPassword)}
+          activeOpacity={0.7}
+        >
+          <FontAwesome
+            name={showPassword ? 'eye-slash' : 'eye'}
+            size={20}
+            color="#333"
+          />
+        </TouchableOpacity>
+      </View>
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
       {loading ? <ActivityIndicator size="small" color="#0000ff" /> : null}
 
@@ -114,6 +131,28 @@ const styles = StyleSheet.create({
     fontSize: 16,
     width: '90%',
     maxWidth: 400,
+    color: '#333',
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '90%',
+    maxWidth: 400,
+    marginBottom: 16,
+  },
+  passwordInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 16,
+    color: '#333',
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 10,
+    padding: 10,
   },
   errorText: {
     color: '#f44336',

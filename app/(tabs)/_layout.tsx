@@ -1,4 +1,16 @@
+// app/(tabs)/_layout.tsx
+import { useState, useEffect } from 'react';
+import {
+  ScrollView,
+  RefreshControl,
+  View,
+  Text,
+  TouchableOpacity,
+} from 'react-native';
 import { Tabs } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { NavigationProp } from '@react-navigation/native';
 import {
   HomeIcon,
   MapMarkerIcon,
@@ -6,11 +18,11 @@ import {
   SettingsIcon,
 } from '@/components/Icons';
 import { useAuthStore } from '@/stores/authStore';
-import { View, Text, TouchableOpacity } from 'react-native';
-import { useEffect, useState } from 'react';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
-import { NavigationProp } from '@react-navigation/native';
+import { useTenantStore } from '@/stores/tenantStore';
+import { useTripStore } from '@/stores/tripStore';
+import { useRefuelStore } from '@/stores/refuelStore';
+import { useServiceStationStore } from '@/stores/serviceStationStore';
+import { syncPendingLocations } from '@/services/db/locationService';
 
 type RootParamList = {
   '(tabs)': {
@@ -20,13 +32,17 @@ type RootParamList = {
   '+not-found': undefined;
 };
 
-export default function TabLayout() {
-  const { isAuthenticated, isLoading } = useAuthStore();
+export default function TabsLayout() {
+  const { isAuthenticated, isLoading, loadAuth } = useAuthStore();
+  const { tenantDomain } = useTenantStore();
+  const { loadTrips, syncPending: syncPendingTrips } = useTripStore();
+  const { loadRefuel, syncPending: syncPendingRefuel } = useRefuelStore();
+  const { loadServiceStations, syncPending: syncPendingServiceStations } =
+    useServiceStationStore();
   const insets = useSafeAreaInsets();
   const [isReady, setIsReady] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation<NavigationProp<RootParamList>>();
-
-  console.log('TabLayout rendered', { isAuthenticated, isLoading, insets });
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -34,6 +50,31 @@ export default function TabLayout() {
     }, 200);
     return () => clearTimeout(timer);
   }, []);
+
+  const onRefresh = async () => {
+    if (!isAuthenticated || !tenantDomain) {
+      console.log('Cannot refresh: Not authenticated or no tenant domain');
+      return;
+    }
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        loadAuth(), // Refresh auth state
+        syncPendingLocations(), // Sync pending locations
+        loadTrips(), // Refresh trips
+        syncPendingTrips(), // Sync pending trips
+        loadRefuel(), // Refresh refuel logs
+        syncPendingRefuel(), // Sync pending refuel
+        loadServiceStations(), // Refresh service stations
+        syncPendingServiceStations(), // Sync pending service stations
+      ]);
+      console.log('Global refresh completed');
+    } catch (error) {
+      console.error('Global refresh failed:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   if (!isAuthenticated || isLoading || !isReady) {
     return (
@@ -44,21 +85,25 @@ export default function TabLayout() {
   }
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: true,
-        tabBarActiveTintColor: '#000000',
-        tabBarStyle: {
-          display: 'none',
-        },
-      }}
-      tabBar={(props) => {
-        console.log(
-          'Tab bar routes:',
-          props.state.routes.map((r) => r.name)
-        );
-        console.log('Navigation state:', navigation.getState());
-        return (
+    <ScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={{ flexGrow: 1 }}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={['#000000']} // Match login button and tab bar active color
+          tintColor="#000000"
+        />
+      }
+    >
+      <Tabs
+        screenOptions={{
+          headerShown: true,
+          tabBarActiveTintColor: '#000000',
+          tabBarStyle: { display: 'none' },
+        }}
+        tabBar={(props) => (
           <View
             style={{
               flexDirection: 'row',
@@ -147,17 +192,17 @@ export default function TabLayout() {
               );
             })}
           </View>
-        );
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{ title: 'James Truck', headerTitleAlign: 'center' }}
-      />
-      <Tabs.Screen name="places" options={{ title: 'Routes' }} />
-      <Tabs.Screen name="refuel" options={{ title: 'Refuel' }} />
-      <Tabs.Screen name="stations" options={{ title: 'Service Stations' }} />
-      <Tabs.Screen name="profile" options={{ title: 'Settings' }} />
-    </Tabs>
+        )}
+      >
+        <Tabs.Screen
+          name="index"
+          options={{ title: 'James Truck', headerTitleAlign: 'center' }}
+        />
+        <Tabs.Screen name="places" options={{ title: 'Routes' }} />
+        <Tabs.Screen name="refuel" options={{ title: 'Refuel' }} />
+        <Tabs.Screen name="stations" options={{ title: 'Service Stations' }} />
+        <Tabs.Screen name="profile" options={{ title: 'Settings' }} />
+      </Tabs>
+    </ScrollView>
   );
 }

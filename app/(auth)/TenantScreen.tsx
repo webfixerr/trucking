@@ -70,10 +70,11 @@ export default function TenantScreen() {
       style={styles.container}
     >
       <View style={styles.form}>
-        <Text style={styles.title}>Tenant ?</Text>
+        <Text style={styles.title}>Find Workspace</Text>
         <TextInput
           style={[styles.input, error ? styles.inputError : null]}
-          placeholder="webfixerr"
+          placeholder="Enter workspace"
+          placeholderTextColor="#888"
           value={tenantName}
           onChangeText={setTenantName}
           autoCapitalize="none"

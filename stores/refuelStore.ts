@@ -26,7 +26,7 @@ export const useRefuelStore = create<RefuelState>((set, get) => ({
     try {
       const apiRefuels = await fetchRefuel();
       set({ refuelLogs: apiRefuels });
-      console.log('Refuel loaded from API:', apiRefuels.length, apiRefuels);
+      // console.log('Refuel loaded from API:', apiRefuels.length, apiRefuels);
     } catch (error) {
       console.error('Error loading refuels:', error);
       set({ refuelLogs: [] });

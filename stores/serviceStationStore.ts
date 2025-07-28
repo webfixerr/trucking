@@ -25,11 +25,11 @@ export const useServiceStationStore = create<ServiceStationState>((set) => ({
   loadServiceStations: async () => {
     const serviceStations = await fetchServiceStations();
     set({ serviceStations });
-    console.log(
-      'Service stations loaded from API:',
-      serviceStations.length,
-      serviceStations
-    );
+    // console.log(
+    //   'Service stations loaded from API:',
+    //   serviceStations.length,
+    //   serviceStations
+    // );
   },
   addServiceStation: async (station) => {
     const newStation = await addServiceStation(station);

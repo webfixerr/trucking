@@ -1,118 +1,167 @@
+// src/screens/TripsScreen.tsx
 import {
+  View,
+  Text,
+  TouchableOpacity,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
-  Text,
-  View,
-  ActivityIndicator,
 } from 'react-native';
+import { useState, useEffect } from 'react';
 import { useTripStore } from '@/stores/tripStore';
-import { useAuthStore } from '@/stores/authStore';
+import { useLocationTracking } from '@/hooks/useLocationTracking';
+import { syncPendingLocations } from '@/services/db/locationService';
+import AddTripModal from '@/components/AddTripModal';
+import { MapMarkerIcon } from '@/components/Icons';
+import Toast from 'react-native-toast-message';
 import TruckSummary from '@/components/TruckSummary';
-import TripList from '@/components/TripList';
-import StartTripModal from '@/components/StartTripModal';
-import { useEffect, useState } from 'react';
-import { Trip as TripListTrip } from '@/types/trip';
 
-export default function PlacesScreen() {
+export default function TripsScreen() {
   const {
     trips,
+    isLoading,
     isJourneyStarted,
     loadTrips,
+    addTrip,
+    finishTrip,
     setJourneyStarted,
-    syncPending,
-    isLoading: isTripsLoading,
   } = useTripStore();
-  const { token, isLoading: isAuthLoading } = useAuthStore();
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const { startTracking, stopTracking } = useLocationTracking();
 
-  // Log token and load trips when token is available
   useEffect(() => {
-    console.log('PlacesScreen - Auth token:', token);
-    if (!isAuthLoading && token) {
-      loadTrips();
-      syncPending();
-    }
-  }, [loadTrips, syncPending, token, isAuthLoading]);
+    loadTrips(); // Load trips from API or SQLite on mount
+    syncPendingLocations(); // Sync pending locations
+  }, []);
 
-  // Categorize trips
-  const ongoingTrip = trips.find((trip) => trip.active);
-  const recentTrips = trips.filter((trip) => !trip.active);
-
-  // Map trips to TripList format
-  const ongoingTripData: TripListTrip[] = ongoingTrip
-    ? [
-        {
-          id: Number(ongoingTrip.id),
-          pickUpToDestiny: `${ongoingTrip.origin} to ${ongoingTrip.destination}`,
-          distance: ongoingTrip.beginning_kilometers,
-          date: new Date(ongoingTrip.created_at).toLocaleDateString(),
-        },
-      ]
-    : [];
-  const recentTripData: TripListTrip[] = recentTrips.map((trip) => ({
-    id: Number(trip.id),
-    pickUpToDestiny: `${trip.origin} to ${trip.destination}`,
-    distance: trip.beginning_kilometers,
-    date: new Date(trip.created_at).toLocaleDateString(),
-  }));
-
-  const handleButtonPress = async () => {
-    if (ongoingTripData.length > 0) {
-      if (ongoingTripData[0] && ongoingTripData[0].id !== undefined) {
-        await handleFinishTrip(ongoingTripData[0].id.toString());
-      }
-    } else {
-      setIsModalVisible(true);
-    }
-  };
-
-  const handleFinishTrip = async (id: string) => {
+  const handleStartJourney = async (trip: {
+    origin: string;
+    destination: string;
+    beginning_kilometers: string;
+    started_at: string;
+  }) => {
     try {
-      await useTripStore.getState().finishTrip(
-        id,
-        '1000', // Hardcoded ending_kilometers
-        new Date().toISOString()
-      );
-      setJourneyStarted(false);
-      await loadTrips(); // Refresh page
+      await addTrip({
+        origin: trip.origin,
+        destination: trip.destination,
+        beginning_kilometers: trip.beginning_kilometers,
+        started_at: trip.started_at,
+        active: true,
+        end_notification_sent: false,
+      });
+      setIsModalVisible(false);
+      setJourneyStarted(true);
+      await startTracking(Date.now().toString()); // Use a temporary ID since trip has no 'id'
+      Toast.show({
+        type: 'success',
+        text1: 'Journey Started',
+        text2: `Tracking trip from ${trip.origin} to ${trip.destination}`,
+      });
     } catch (error) {
-      alert('Failed to finish trip');
+      console.error('Error starting journey:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to start journey.',
+      });
     }
   };
+
+  const handleFinishJourney = async (tripId: string) => {
+    try {
+      const ended_at = new Date().toISOString();
+      await finishTrip(tripId, '0', ended_at); // Replace '0' with actual ending kilometers if available
+      setJourneyStarted(false);
+      setCurrentLocation(null);
+      await stopTracking();
+      await syncPendingLocations();
+      Toast.show({
+        type: 'success',
+        text1: 'Journey Finished',
+        text2: 'Trip data synced.',
+      });
+    } catch (error) {
+      console.error('Error finishing journey:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to finish journey.',
+      });
+    }
+  };
+
+  // Sort trips: active trip first, then non-active by created_at descending
+  const activeTrip = trips.find((trip) => trip.active);
+  const recentTrips = trips
+    .filter((trip) => !trip.active)
+    .sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
 
   return (
     <View style={styles.container}>
-      {isAuthLoading || isTripsLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#000" />
-          <Text style={styles.loadingText}>Loading trips...</Text>
-        </View>
-      ) : (
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <TruckSummary mileage="84,502 mi" />
+      <TruckSummary mileage="84,502 mi" />
+      {isLoading && <Text style={styles.loadingText}>Loading trips...</Text>}
+      <TouchableOpacity
+        style={styles.customButton}
+        onPress={() => setIsModalVisible(true)}
+        activeOpacity={0.7}
+        disabled={isJourneyStarted} // Disable if a journey is active
+      >
+        <Text style={styles.buttonText}>Start Journey</Text>
+      </TouchableOpacity>
+      {activeTrip && (
+        <View style={styles.tripContainer}>
+          <View style={styles.tripDetails}>
+            <MapMarkerIcon size={16} color="#555" />
+            <Text style={styles.tripText}>
+              {activeTrip.origin} to {activeTrip.destination},{' '}
+              {activeTrip.beginning_kilometers} km
+            </Text>
+          </View>
           <TouchableOpacity
-            style={styles.customButton}
-            onPress={handleButtonPress}
+            style={[styles.customButton, styles.finishButton]}
+            onPress={() => handleFinishJourney(activeTrip.id)}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>
-              {ongoingTripData.length > 0 ? 'Finish Journey' : 'Start Journey'}
-            </Text>
+            <Text style={styles.buttonText}>Finish Journey</Text>
           </TouchableOpacity>
-
-          {/* Ongoing Trip Section (read-only) */}
-          <TripList data={ongoingTripData} title="Ongoing Trip" />
-
-          {/* Recent Trips Section */}
-          <TripList data={recentTripData} title="Recent Trips" />
-        </ScrollView>
+        </View>
       )}
-
-      <StartTripModal
+      {recentTrips.length > 0 && (
+        <>
+          <Text style={styles.sectionTitle}>Recent Trips</Text>
+          <ScrollView>
+            {recentTrips.map((trip) => (
+              <View key={trip.id} style={styles.tripContainer}>
+                <View style={styles.tripDetails}>
+                  <MapMarkerIcon size={16} color="#555" />
+                  <Text style={styles.tripText}>
+                    {trip.origin} to {trip.destination},{' '}
+                    {trip.beginning_kilometers} km
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+        </>
+      )}
+      {isJourneyStarted && currentLocation && (
+        <Text style={styles.locationText}>
+          Current Location: {currentLocation.latitude?.toFixed(4)},{' '}
+          {currentLocation.longitude?.toFixed(4)}
+        </Text>
+      )}
+      <AddTripModal
         visible={isModalVisible}
         onClose={() => setIsModalVisible(false)}
+        onSubmit={handleStartJourney}
       />
+      <Toast />
     </View>
   );
 }
@@ -120,18 +169,8 @@ export default function PlacesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f7f7f7',
     padding: 16,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 8,
-    fontSize: 16,
-    color: '#000',
+    backgroundColor: '#fff',
   },
   customButton: {
     backgroundColor: '#000',
@@ -142,9 +181,49 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  finishButton: {
+    backgroundColor: '#767577',
+  },
   buttonText: {
     color: '#ffffff',
     fontSize: 18,
     fontWeight: '500',
+  },
+  tripContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+    padding: 10,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+  },
+  tripDetails: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  tripText: {
+    fontSize: 14,
+    marginLeft: 8,
+    color: '#333',
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 8,
+    marginBottom: 8,
+    color: '#000',
+  },
+  locationText: {
+    fontSize: 14,
+    color: '#555',
+    marginTop: 16,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: '#555',
+    textAlign: 'center',
+    marginBottom: 16,
   },
 });

@@ -16,7 +16,12 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.webfixerr.boltexpo",
-      "buildNumber": "1.0.0"
+      "buildNumber": "1.0.0",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "This app needs your location to track your journey.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs your location to track your journey in the background.",
+        "UIBackgroundModes": ["location"]
+      }
     },
     "android": {
       "softwareKeyboardLayoutMode": "pan",
@@ -28,15 +33,48 @@
       },
       "permissions": [
         "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.READ_EXTERNAL_STORAGE"
-      ]
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "POST_NOTIFICATIONS",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION"
+      ],
+      "foregroundService": {
+        "useService": true,
+        "notificationTitle": "Tracking Your Location",
+        "notificationBody": "Location tracking is active for your journey.",
+        "notificationColor": "#000000"
+      }
     },
     "web": {
       "bundler": "metro",
       "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
-    "plugins": ["expo-router", "expo-sqlite", "expo-font", "expo-web-browser"],
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      "expo-font",
+      "expo-web-browser",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "This app needs your location to track your journey in the background.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isIosBackgroundLocationEnabled": true
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#000000"
+        }
+      ],
+      "expo-task-manager"
+    ],
     "experiments": {
       "typedRoutes": true
     },

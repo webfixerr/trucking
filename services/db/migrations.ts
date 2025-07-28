@@ -76,6 +76,18 @@ function initializeDatabase() {
         );
       `);
       console.log('Pending service stations table created');
+
+      dbInstance!.runSync(`
+        CREATE TABLE IF NOT EXISTS pending_locations (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          latitude TEXT,
+          longitude TEXT,
+          timestamp TEXT,
+          trip_id TEXT,
+          created_at TEXT
+        );
+      `);
+      console.log('Pending locations table created');
     });
   } catch (error) {
     console.error('Error initializing database:', error);
