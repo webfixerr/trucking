@@ -1,11 +1,11 @@
 {
   "expo": {
     "name": "RoadFuel",
-    "slug": "bolt-expo-nativewind",
+    "slug": "roadfuel",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "boltexpo",
+    "scheme": "roadfuel",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash.png",
