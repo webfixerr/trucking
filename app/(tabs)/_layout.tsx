@@ -22,7 +22,6 @@ import { useTenantStore } from '@/stores/tenantStore';
 import { useTripStore } from '@/stores/tripStore';
 import { useRefuelStore } from '@/stores/refuelStore';
 import { useServiceStationStore } from '@/stores/serviceStationStore';
-import { syncPendingLocations } from '@/services/db/locationService';
 
 type RootParamList = {
   '(tabs)': {
@@ -35,7 +34,7 @@ type RootParamList = {
 export default function TabsLayout() {
   const { isAuthenticated, isLoading, loadAuth } = useAuthStore();
   const { tenantDomain } = useTenantStore();
-  const { loadTrips, syncPending: syncPendingTrips } = useTripStore();
+  const { loadTrips } = useTripStore();
   const { loadRefuel, syncPending: syncPendingRefuel } = useRefuelStore();
   const { loadServiceStations, syncPending: syncPendingServiceStations } =
     useServiceStationStore();
@@ -60,9 +59,7 @@ export default function TabsLayout() {
     try {
       await Promise.all([
         loadAuth(), // Refresh auth state
-        syncPendingLocations(), // Sync pending locations
         loadTrips(), // Refresh trips
-        syncPendingTrips(), // Sync pending trips
         loadRefuel(), // Refresh refuel logs
         syncPendingRefuel(), // Sync pending refuel
         loadServiceStations(), // Refresh service stations

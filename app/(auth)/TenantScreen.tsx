@@ -74,7 +74,6 @@ export default function TenantScreen() {
         <Image
           source={require('@/assets/images/logo.png')}
           style={styles.logo}
-          resizeMode="cover"
         />
         <Text style={styles.title}>Find Workspace</Text>
         <TextInput

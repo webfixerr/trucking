@@ -1,15 +1,7 @@
+// src/stores/tripStore.ts
 import { create } from 'zustand';
 import api from '@/lib/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as SQLite from 'expo-sqlite';
-
-// Custom SQLError interface since expo-sqlite doesn't export it
-interface SQLError {
-  code: number;
-  message: string;
-}
-
-const db = SQLite.openDatabaseSync('truckersApp.db');
 
 interface Trip {
   id: string;
@@ -24,34 +16,29 @@ interface Trip {
   created_at: string;
 }
 
-interface PendingTrip {
-  id: number;
-  origin: string;
-  destination: string;
-  beginning_kilometers: string;
-  started_at: string;
-  active: number;
-  end_notification_sent: number;
-  created_at: string;
-}
-
 interface TripState {
   trips: Trip[];
   isLoading: boolean;
   isJourneyStarted: boolean;
-  loadTrips: () => void;
+  currentTripId: string | null;
+  loadTrips: () => Promise<void>;
   addTrip: (
     trip: Omit<Trip, 'id' | 'created_at' | 'ending_kilometers' | 'ended_at'>
-  ) => void;
-  finishTrip: (id: string, ending_kilometers: string, ended_at: string) => void;
-  syncPending: () => void;
+  ) => Promise<Trip>;
+  finishTrip: (
+    id: string,
+    ending_kilometers: string,
+    ended_at: string
+  ) => Promise<void>;
   setJourneyStarted: (value: boolean) => void;
+  setCurrentTripId: (id: string | null) => void;
 }
 
 export const useTripStore = create<TripState>((set, get) => ({
   trips: [],
   isLoading: false,
   isJourneyStarted: false,
+  currentTripId: null,
 
   loadTrips: async () => {
     set({ isLoading: true });
@@ -99,18 +86,6 @@ export const useTripStore = create<TripState>((set, get) => ({
       const config = {
         headers: { Accept: 'application/json' },
       };
-      // console.log('Sending POST request to /trips', {
-      //   url: '/trips',
-      //   headers: config.headers,
-      //   data: {
-      //     origin: trip.origin,
-      //     destination: trip.destination,
-      //     beginning_kilometers: Number(trip.beginning_kilometers),
-      //     started_at: formattedStartedAt,
-      //     active: trip.active,
-      //     end_notification_sent: trip.end_notification_sent,
-      //   },
-      // });
       const response = await api.post(
         '/trips',
         {
@@ -133,8 +108,11 @@ export const useTripStore = create<TripState>((set, get) => ({
       };
       set((state) => ({
         trips: [...state.trips, newTrip],
+        currentTripId: newTrip.id,
+        isJourneyStarted: true,
       }));
-      // console.log('Trip added via API:', newTrip);
+      console.log('Trip added via API:', newTrip);
+      return newTrip;
     } catch (error: any) {
       console.error('Error adding trip via API:', {
         message: error.message,
@@ -143,35 +121,22 @@ export const useTripStore = create<TripState>((set, get) => ({
         headers: error.config?.headers,
         url: error.config?.url,
       });
-      // Save to SQLite on network failure
-      await new Promise<void>((resolve, reject) => {
-        db.withTransactionSync(() => {
-          try {
-            db.runSync(
-              `INSERT INTO pending_trips (origin, destination, beginning_kilometers, started_at, active, end_notification_sent, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?)`,
-              [
-                trip.origin,
-                trip.destination,
-                trip.beginning_kilometers,
-                formattedStartedAt,
-                trip.active ? 1 : 0,
-                trip.end_notification_sent ? 1 : 0,
-                created_at,
-              ]
-            );
-            // console.log('Trip saved to SQLite for later sync:', {
-            //   ...trip,
-            //   started_at: formattedStartedAt,
-            // });
-            resolve();
-          } catch (err: any) {
-            console.error('Error saving trip to SQLite:', err);
-            reject(err);
-          }
-        });
-      });
-      throw error;
+      // Fallback to local state
+      const newTrip = {
+        ...trip,
+        id: Date.now().toString(),
+        created_at,
+        ending_kilometers: null,
+        ended_at: null,
+        started_at: formattedStartedAt,
+      };
+      set((state) => ({
+        trips: [...state.trips, newTrip],
+        currentTripId: newTrip.id,
+        isJourneyStarted: true,
+      }));
+      console.log('Trip added locally:', newTrip);
+      return newTrip;
     }
   },
 
@@ -180,23 +145,14 @@ export const useTripStore = create<TripState>((set, get) => ({
     ending_kilometers: string,
     ended_at: string
   ) => {
+    const formattedEndedAt = new Date(ended_at)
+      .toISOString()
+      .replace('T', ' ')
+      .slice(0, 19);
     try {
-      const formattedEndedAt = new Date(ended_at)
-        .toISOString()
-        .replace('T', ' ')
-        .slice(0, 19);
       const config = {
         headers: { Accept: 'application/json' },
       };
-      // console.log('Sending PATCH request to /trips/' + id, {
-      //   url: `/trips/${id}`,
-      //   headers: config.headers,
-      //   data: {
-      //     ending_kilometers: Number(ending_kilometers),
-      //     ended_at: formattedEndedAt,
-      //     active: false,
-      //   },
-      // });
       const response = await api.patch(
         `/trips/${id}`,
         {
@@ -220,9 +176,10 @@ export const useTripStore = create<TripState>((set, get) => ({
       };
       set((state) => ({
         trips: state.trips.map((t) => (t.id === id ? updatedTrip : t)),
-        isJourneyStarted: false, // Update journey status
+        isJourneyStarted: false,
+        currentTripId: null,
       }));
-      // console.log('Trip finished via API:', updatedTrip);
+      console.log('Trip finished via API:', updatedTrip);
     } catch (error: any) {
       console.error('Error finishing trip via API:', {
         message: error.message,
@@ -231,68 +188,25 @@ export const useTripStore = create<TripState>((set, get) => ({
         headers: error.config?.headers,
         url: error.config?.url,
       });
-      // Fallback to loadTrips on error to ensure consistency
-      await get().loadTrips();
-      throw error;
-    }
-  },
-
-  syncPending: async () => {
-    try {
-      const pendingTrips = await new Promise<PendingTrip[]>(
-        (resolve, reject) => {
-          db.withTransactionSync(() => {
-            try {
-              const result = db.getAllSync<PendingTrip>(
-                `SELECT * FROM pending_trips`,
-                []
-              );
-              resolve(result);
-            } catch (err: any) {
-              console.error('Error fetching pending trips:', err);
-              reject(err);
-            }
-          });
-        }
-      );
-
-      for (const trip of pendingTrips) {
-        try {
-          const formattedStartedAt = new Date(trip.started_at)
-            .toISOString()
-            .replace('T', ' ')
-            .slice(0, 19);
-          const response = await api.post(
-            '/trips',
-            {
-              origin: trip.origin,
-              destination: trip.destination,
-              beginning_kilometers: Number(trip.beginning_kilometers),
-              started_at: formattedStartedAt,
-              active: Boolean(trip.active),
-              end_notification_sent: Boolean(trip.end_notification_sent),
-            },
-            {
-              headers: { Accept: 'application/json' },
-            }
-          );
-          // console.log('Pending trip synced:', response.data.data);
-          // Remove from SQLite
-          db.withTransactionSync(() => {
-            try {
-              db.runSync(`DELETE FROM pending_trips WHERE id = ?`, [trip.id]);
-              console.log('Pending trip deleted from SQLite:', trip.id);
-            } catch (err: any) {
-              console.error('Error deleting pending trip:', err);
-            }
-          });
-        } catch (error) {
-          console.error('Error syncing pending trip:', error);
-        }
-      }
-      await get().loadTrips();
-    } catch (error) {
-      console.error('Error in syncPending:', error);
+      set((state) => ({
+        trips: state.trips.map((t) =>
+          t.id === id
+            ? {
+                ...t,
+                active: false,
+                ending_kilometers,
+                ended_at: formattedEndedAt,
+              }
+            : t
+        ),
+        isJourneyStarted: false,
+        currentTripId: null,
+      }));
+      console.log('Trip finished locally:', {
+        id,
+        ending_kilometers,
+        ended_at,
+      });
     }
   },
 
@@ -305,4 +219,6 @@ export const useTripStore = create<TripState>((set, get) => ({
       console.error('Error setting journey started:', error);
     }
   },
+
+  setCurrentTripId: (id: string | null) => set({ currentTripId: id }),
 }));

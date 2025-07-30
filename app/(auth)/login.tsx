@@ -54,7 +54,6 @@ export default function LoginScreen() {
       <Image
         source={require('@/assets/images/logo.png')}
         style={styles.logo}
-        resizeMode='cover'
       />
       <Text style={styles.title}>Login</Text>
 

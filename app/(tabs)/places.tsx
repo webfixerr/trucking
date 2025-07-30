@@ -9,11 +9,11 @@ import {
 import { useState, useEffect } from 'react';
 import { useTripStore } from '@/stores/tripStore';
 import { useLocationTracking } from '@/hooks/useLocationTracking';
-import { syncPendingLocations } from '@/services/db/locationService';
 import AddTripModal from '@/components/AddTripModal';
 import { MapMarkerIcon } from '@/components/Icons';
 import Toast from 'react-native-toast-message';
 import TruckSummary from '@/components/TruckSummary';
+import * as Location from 'expo-location';
 
 export default function TripsScreen() {
   const {
@@ -24,6 +24,7 @@ export default function TripsScreen() {
     addTrip,
     finishTrip,
     setJourneyStarted,
+    setCurrentTripId,
   } = useTripStore();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<{
@@ -33,8 +34,7 @@ export default function TripsScreen() {
   const { startTracking, stopTracking } = useLocationTracking();
 
   useEffect(() => {
-    loadTrips(); // Load trips from API or SQLite on mount
-    syncPendingLocations(); // Sync pending locations
+    loadTrips();
   }, []);
 
   const handleStartJourney = async (trip: {
@@ -44,7 +44,36 @@ export default function TripsScreen() {
     started_at: string;
   }) => {
     try {
-      await addTrip({
+      // Check if location services are enabled
+      const servicesEnabled = await Location.hasServicesEnabledAsync();
+      if (!servicesEnabled) {
+        await new Promise<void>((resolve) => {
+          Toast.show({
+            type: 'error',
+            text1: 'Location Services Disabled',
+            text2: 'Please enable GPS to start a trip.',
+          });
+          resolve();
+        });
+        return;
+      }
+
+      // Check permissions
+      const { status: foregroundStatus } =
+        await Location.getForegroundPermissionsAsync();
+      const { status: backgroundStatus } =
+        await Location.getBackgroundPermissionsAsync();
+      if (foregroundStatus !== 'granted' || backgroundStatus !== 'granted') {
+        Toast.show({
+          type: 'error',
+          text1: 'Permission Denied',
+          text2: 'Location permissions are required to start a trip.',
+        });
+        return;
+      }
+
+      // Add trip only if location services are enabled
+      const newTrip = await addTrip({
         origin: trip.origin,
         destination: trip.destination,
         beginning_kilometers: trip.beginning_kilometers,
@@ -52,13 +81,23 @@ export default function TripsScreen() {
         active: true,
         end_notification_sent: false,
       });
-      setIsModalVisible(false);
+
+      // Start location tracking
+      await startTracking(newTrip.id);
       setJourneyStarted(true);
-      await startTracking(Date.now().toString()); // Use a temporary ID since trip has no 'id'
       Toast.show({
         type: 'success',
         text1: 'Journey Started',
         text2: `Tracking trip from ${trip.origin} to ${trip.destination}`,
+      });
+
+      // Update current location
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      setCurrentLocation({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
       });
     } catch (error) {
       console.error('Error starting journey:', error);
@@ -75,9 +114,9 @@ export default function TripsScreen() {
       const ended_at = new Date().toISOString();
       await finishTrip(tripId, '0', ended_at); // Replace '0' with actual ending kilometers if available
       setJourneyStarted(false);
+      setCurrentTripId(null);
       setCurrentLocation(null);
       await stopTracking();
-      await syncPendingLocations();
       Toast.show({
         type: 'success',
         text1: 'Journey Finished',
@@ -107,7 +146,7 @@ export default function TripsScreen() {
       <TruckSummary mileage="84,502 mi" />
       {isLoading && <Text style={styles.loadingText}>Loading trips...</Text>}
       <TouchableOpacity
-        style={styles.customButton}
+        style={[styles.customButton, isJourneyStarted && styles.buttonDisabled]}
         onPress={() => setIsModalVisible(true)}
         activeOpacity={0.7}
         disabled={isJourneyStarted} // Disable if a journey is active
@@ -214,6 +253,9 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 8,
     color: '#000',
+  },
+  buttonDisabled: {
+    opacity: 0.7,
   },
   locationText: {
     fontSize: 14,

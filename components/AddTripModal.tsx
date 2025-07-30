@@ -50,6 +50,7 @@ export default function AddTripModal({
     setOrigin('');
     setDestination('');
     setBeginningKilometers('');
+    onClose();
   };
 
   return (

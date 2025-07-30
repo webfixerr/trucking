@@ -6,13 +6,165 @@ import { useAuthStore } from '@/stores/authStore';
 import { useTripStore } from '@/stores/tripStore';
 import { useRefuelStore } from '@/stores/refuelStore';
 import { useTenantStore } from '@/stores/tenantStore';
-import { openDatabase, debugDatabase } from '@/services/db/migrations';
+import { openDatabase } from '@/services/db';
 import { initializeApiInterceptors } from '@/lib/api';
-import { View, Text } from 'react-native';
+import { View, Text, Alert } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { debugAuthTable } from '@/services/db/authService';
+import * as Location from 'expo-location';
+import Toast from 'react-native-toast-message';
+import * as SplashScreen from 'expo-splash-screen';
+import { debugDatabase } from '@/services/db/migrations';
+
+SplashScreen.preventAutoHideAsync();
+
+async function requestLocationPermissions() {
+  try {
+    const servicesEnabled = await Location.hasServicesEnabledAsync();
+    console.log('Location services enabled:', servicesEnabled);
+    if (!servicesEnabled) {
+      await new Promise<void>((resolve) => {
+        Alert.alert(
+          'Enable Location Services',
+          'Please enable location services (GPS) on your device to track your journey.',
+          [
+            { text: 'Cancel', style: 'cancel', onPress: () => resolve() },
+            {
+              text: 'Open Settings',
+              onPress: async () => {
+                await Location.requestForegroundPermissionsAsync();
+                resolve();
+              },
+            },
+          ]
+        );
+      });
+      Toast.show({
+        type: 'error',
+        text1: 'Location Services Disabled',
+        text2: 'Please enable GPS in your device settings.',
+      });
+      return false;
+    }
+
+    const foregroundStatus = await Location.getForegroundPermissionsAsync();
+    console.log('Foreground permission status:', foregroundStatus.status);
+    const backgroundStatus = await Location.getBackgroundPermissionsAsync();
+    console.log('Background permission status:', backgroundStatus.status);
+
+    if (
+      foregroundStatus.status === 'undetermined' ||
+      backgroundStatus.status === 'undetermined'
+    ) {
+      await new Promise<void>((resolve) => {
+        Alert.alert(
+          'Location Permission Required',
+          'RoadFuel needs access to your location to track your journey in the foreground and background. This helps you log trips and navigate efficiently.',
+          [
+            { text: 'Cancel', style: 'cancel', onPress: () => resolve() },
+            { text: 'Continue', onPress: () => resolve() },
+          ]
+        );
+      });
+    }
+
+    let foregroundResult = foregroundStatus;
+    let backgroundResult = backgroundStatus;
+
+    if (foregroundStatus.status !== 'granted') {
+      foregroundResult = await Location.requestForegroundPermissionsAsync();
+      console.log('Foreground permission requested:', foregroundResult.status);
+    }
+
+    if (backgroundStatus.status !== 'granted') {
+      backgroundResult = await Location.requestBackgroundPermissionsAsync();
+      console.log('Background permission requested:', backgroundResult.status);
+    }
+
+    if (foregroundResult.status !== 'granted') {
+      console.log(
+        'Foreground permission not granted:',
+        foregroundResult.status
+      );
+      Toast.show({
+        type: 'error',
+        text1: 'Permission Denied',
+        text2:
+          'Foreground location permission is required to track your journey.',
+      });
+      return false;
+    }
+
+    if (backgroundResult.status !== 'granted') {
+      console.log(
+        'Background permission not granted:',
+        backgroundResult.status
+      );
+      Toast.show({
+        type: 'error',
+        text1: 'Permission Denied',
+        text2:
+          'Background location permission is required to track your journey even when the app is closed.',
+      });
+      return false;
+    }
+
+    console.log('Location permissions granted (foreground and background)');
+    return true;
+  } catch (error) {
+    console.error('Error requesting location permissions:', error);
+    Toast.show({
+      type: 'error',
+      text1: 'Error',
+      text2: 'Failed to request location permissions.',
+    });
+    return false;
+  }
+}
+
+async function initializeApp() {
+  try {
+    const permissionsGranted = await requestLocationPermissions();
+    if (!permissionsGranted) {
+      throw new Error('Location permissions not granted');
+    }
+
+    let db;
+    let attempts = 0;
+    const maxAttempts = 3;
+    while (attempts < maxAttempts) {
+      try {
+        db = openDatabase();
+        console.log('Database initialized successfully');
+        break;
+      } catch (dbError) {
+        console.error(
+          `Database initialization attempt ${attempts + 1} failed:`,
+          dbError
+        );
+        attempts++;
+        if (attempts === maxAttempts) {
+          throw new Error(
+            'Failed to initialize database after multiple attempts'
+          );
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    }
+
+    const authData = await AsyncStorage.getItem('auth-storage');
+    const tenant = await AsyncStorage.getItem('tenant-storage');
+    if (tenant) {
+      console.log('Tenant loaded from AsyncStorage:', tenant);
+    }
+    return { authData, tenant, db };
+  } catch (err: any) {
+    console.error('App initialization error:', err);
+    throw new Error('Failed to initialize app: ' + err.message);
+  }
+}
 
 function useProtectedRoute(
   isAuthenticated: boolean,
@@ -28,33 +180,25 @@ function useProtectedRoute(
       return;
     }
 
-    const timeout = setTimeout(() => {
-      const inAuthGroup = segments[0] === '(auth)';
-      if (!tenantDomain && !inAuthGroup) {
-        router.replace('/TenantScreen');
-      } else if (!isAuthenticated && !inAuthGroup) {
-        router.replace('/login');
-      } else if (isAuthenticated && inAuthGroup) {
-        router.replace('/(tabs)/places');
-      }
-    }, 300);
-
-    return () => clearTimeout(timeout);
+    const inAuthGroup = segments[0] === '(auth)';
+    if (!tenantDomain && !inAuthGroup) {
+      console.log('Navigating to TenantScreen');
+      router.replace('/TenantScreen');
+    } else if (!isAuthenticated && !inAuthGroup) {
+      console.log('Navigating to login');
+      router.replace('/login');
+    } else if (isAuthenticated && inAuthGroup) {
+      console.log('Navigating to places');
+      router.replace('/(tabs)/places');
+    }
   }, [isAuthenticated, isAuthLoaded, isMounted, tenantDomain, segments]);
 }
 
 export default function RootLayout() {
   useFrameworkReady();
   const { isAuthenticated, loadAuth } = useAuthStore();
-  const {
-    loadTrips,
-    syncPending: syncPendingTrips,
-  } = useTripStore();
-  const {
-    loadRefuel,
-    syncPending: syncPendingRefuel,
-    debugPendingRefuel,
-  } = useRefuelStore();
+  const { loadTrips } = useTripStore();
+  const { loadRefuel, syncPending: syncPendingRefuel } = useRefuelStore();
   const { tenantDomain } = useTenantStore();
   const [isAuthLoaded, setIsAuthLoaded] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -63,43 +207,35 @@ export default function RootLayout() {
   useProtectedRoute(isAuthenticated, isAuthLoaded, isMounted, tenantDomain);
 
   useEffect(() => {
-    async function initializeApp() {
+    async function prepare() {
       try {
-        openDatabase(); // Initialize SQLite database
-        const authData = await loadAuth(); // Load auth data from SQLite
-        const tenant = await AsyncStorage.getItem('tenant-storage');
-        if (tenant) {
-          console.log('Tenant loaded from AsyncStorage:', tenant);
-        }
+        const { authData, tenant, db } = await initializeApp();
         if (tenantDomain && authData) {
-          initializeApiInterceptors(); // Initialize API only if tenant and auth are ready
-          loadTrips();
-          loadRefuel();
+          initializeApiInterceptors();
+          await Promise.all([loadTrips(), loadRefuel(), syncPendingRefuel()]);
+          console.log('Global refresh completed');
         }
-        setIsAuthLoaded(true);
-
-        // Debug database state
         debugDatabase();
         debugAuthTable();
-        debugPendingRefuel();
-      } catch (err: any) {
-        console.error('App initialization error:', err);
-        setError('Failed to initialize app: ' + err.message);
         setIsAuthLoaded(true);
+      } catch (err: any) {
+        console.error('App preparation error:', err);
+        setError(err.message);
+        setIsAuthLoaded(true);
+      } finally {
+        await SplashScreen.hideAsync();
       }
     }
-    initializeApp();
+    prepare();
   }, [tenantDomain]);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // Sync pending data when network is available
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
       if (state.isConnected && isAuthenticated && tenantDomain) {
-        syncPendingTrips();
         syncPendingRefuel();
       }
     });
@@ -128,9 +264,11 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false }} initialRouteName="(auth)">
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="TenantScreen" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" options={{ presentation: 'modal' }} />
       </Stack>
       <StatusBar style="auto" />
+      <Toast />
     </SafeAreaProvider>
   );
 }

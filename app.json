@@ -6,15 +6,14 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "roadfuel",
+    "databases": ["truckersApp.db"],
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.webfixerr.roadfuel",
@@ -23,9 +22,7 @@
         "CFBundleDisplayName": "RoadFuel",
         "NSLocationWhenInUseUsageDescription": "This app needs your location to track your journey.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs your location to track your journey in the background.",
-        "UIBackgroundModes": [
-          "location"
-        ]
+        "UIBackgroundModes": ["location"]
       }
     },
     "android": {
@@ -72,6 +69,7 @@
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "This app needs your location to track your journey in the background.",
+          "locationBackgroundPermission": "RoadFuel needs background location access to track your journey even when the app is closed.",
           "isAndroidBackgroundLocationEnabled": true,
           "isIosBackgroundLocationEnabled": true
         }
