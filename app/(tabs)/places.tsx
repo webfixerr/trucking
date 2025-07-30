@@ -1,10 +1,10 @@
-// src/screens/TripsScreen.tsx
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { useState, useEffect } from 'react';
 import { useTripStore } from '@/stores/tripStore';
@@ -47,13 +47,10 @@ export default function TripsScreen() {
       // Check if location services are enabled
       const servicesEnabled = await Location.hasServicesEnabledAsync();
       if (!servicesEnabled) {
-        await new Promise<void>((resolve) => {
-          Toast.show({
-            type: 'error',
-            text1: 'Location Services Disabled',
-            text2: 'Please enable GPS to start a trip.',
-          });
-          resolve();
+        Toast.show({
+          type: 'error',
+          text1: 'Location Services Disabled',
+          text2: 'Please enable GPS to start a trip.',
         });
         return;
       }
@@ -72,7 +69,7 @@ export default function TripsScreen() {
         return;
       }
 
-      // Add trip only if location services are enabled
+      // Add trip
       const newTrip = await addTrip({
         origin: trip.origin,
         destination: trip.destination,
@@ -111,12 +108,28 @@ export default function TripsScreen() {
 
   const handleFinishJourney = async (tripId: string) => {
     try {
-      const ended_at = new Date().toISOString();
-      await finishTrip(tripId, '0', ended_at); // Replace '0' with actual ending kilometers if available
+      const trip = trips.find((t) => t.id === tripId);
+      if (!trip) {
+        throw new Error('Trip not found');
+      }
+      const distance = (await finishTrip(tripId, '0', new Date().toISOString()))
+        .distance;
+      const beginningKilometers = parseFloat(trip.beginning_kilometers);
+      const endingKilometers = (beginningKilometers + distance).toFixed(2);
+
+      // Call finishTrip with calculated ending_kilometers
+      await finishTrip(tripId, endingKilometers, new Date().toISOString());
+
+      stopTracking();
       setJourneyStarted(false);
       setCurrentTripId(null);
       setCurrentLocation(null);
-      await stopTracking();
+      Alert.alert(
+        'Trip Completed',
+        `Total distance traveled: ${distance} km\nPredicted ending odometer: ${endingKilometers} km`,
+        [{ text: 'OK', style: 'default' }],
+        { cancelable: false }
+      );
       Toast.show({
         type: 'success',
         text1: 'Journey Finished',
@@ -149,7 +162,7 @@ export default function TripsScreen() {
         style={[styles.customButton, isJourneyStarted && styles.buttonDisabled]}
         onPress={() => setIsModalVisible(true)}
         activeOpacity={0.7}
-        disabled={isJourneyStarted} // Disable if a journey is active
+        disabled={isJourneyStarted}
       >
         <Text style={styles.buttonText}>Start Journey</Text>
       </TouchableOpacity>
@@ -162,6 +175,12 @@ export default function TripsScreen() {
               {activeTrip.beginning_kilometers} km
             </Text>
           </View>
+          {activeTrip.start_latitude && activeTrip.start_longitude && (
+            <Text style={styles.locationText}>
+              Start Location: {parseFloat(activeTrip.start_latitude).toFixed(4)}
+              , {parseFloat(activeTrip.start_longitude).toFixed(4)}
+            </Text>
+          )}
           <TouchableOpacity
             style={[styles.customButton, styles.finishButton]}
             onPress={() => handleFinishJourney(activeTrip.id)}
@@ -184,6 +203,17 @@ export default function TripsScreen() {
                     {trip.beginning_kilometers} km
                   </Text>
                 </View>
+                {trip.ending_kilometers && (
+                  <Text style={styles.tripText}>
+                    Ending Kilometers: {trip.ending_kilometers} km
+                  </Text>
+                )}
+                {trip.start_latitude && trip.start_longitude && (
+                  <Text style={styles.tripText}>
+                    Start Location: {parseFloat(trip.start_latitude).toFixed(4)}
+                    , {parseFloat(trip.start_longitude).toFixed(4)}
+                  </Text>
+                )}
               </View>
             ))}
           </ScrollView>
@@ -191,8 +221,8 @@ export default function TripsScreen() {
       )}
       {isJourneyStarted && currentLocation && (
         <Text style={styles.locationText}>
-          Current Location: {currentLocation.latitude?.toFixed(4)},{' '}
-          {currentLocation.longitude?.toFixed(4)}
+          Current Location: {currentLocation.latitude.toFixed(4)},{' '}
+          {currentLocation.longitude.toFixed(4)}
         </Text>
       )}
       <AddTripModal
@@ -229,9 +259,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   tripContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: 12,
     padding: 10,
     backgroundColor: '#f5f5f5',
@@ -240,7 +267,7 @@ const styles = StyleSheet.create({
   tripDetails: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
+    marginBottom: 8,
   },
   tripText: {
     fontSize: 14,
@@ -260,7 +287,7 @@ const styles = StyleSheet.create({
   locationText: {
     fontSize: 14,
     color: '#555',
-    marginTop: 16,
+    marginTop: 8,
   },
   loadingText: {
     fontSize: 14,

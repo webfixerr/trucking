@@ -131,6 +131,10 @@ export const useLocationTracking = () => {
           distanceInterval: 100,
         },
         async (location) => {
+          if (!location || !location.coords) {
+            console.error('Invalid location data');
+            return;
+          }
           const { latitude, longitude } = location.coords;
           const timestamp = new Date(location.timestamp).toISOString();
           const { currentTripId } = useTripStore.getState();

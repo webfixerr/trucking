@@ -1,7 +1,15 @@
-// src/stores/tripStore.ts
 import { create } from 'zustand';
 import api from '@/lib/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { calculateDistance } from '@/utils/distanceUtils';
+import * as Location from 'expo-location';
+
+interface Location {
+  latitude: string;
+  longitude: string;
+  timestamp: string;
+  trip_id: string;
+}
 
 interface Trip {
   id: string;
@@ -14,6 +22,8 @@ interface Trip {
   active: boolean;
   end_notification_sent: boolean;
   created_at: string;
+  start_latitude?: string;
+  start_longitude?: string;
 }
 
 interface TripState {
@@ -23,13 +33,21 @@ interface TripState {
   currentTripId: string | null;
   loadTrips: () => Promise<void>;
   addTrip: (
-    trip: Omit<Trip, 'id' | 'created_at' | 'ending_kilometers' | 'ended_at'>
+    trip: Omit<
+      Trip,
+      | 'id'
+      | 'created_at'
+      | 'ending_kilometers'
+      | 'ended_at'
+      | 'start_latitude'
+      | 'start_longitude'
+    >
   ) => Promise<Trip>;
   finishTrip: (
     id: string,
     ending_kilometers: string,
     ended_at: string
-  ) => Promise<void>;
+  ) => Promise<{ trip: Trip; distance: number }>;
   setJourneyStarted: (value: boolean) => void;
   setCurrentTripId: (id: string | null) => void;
 }
@@ -57,9 +75,11 @@ export const useTripStore = create<TripState>((set, get) => ({
         active: trip.active,
         end_notification_sent: trip.end_notification_sent,
         created_at: trip.created_at,
+        start_latitude: trip.start_latitude || null,
+        start_longitude: trip.start_longitude || null,
       }));
       set({ trips: apiTrips });
-      // console.log('Trips loaded from API:', apiTrips.length, apiTrips);
+      console.log('Trips loaded from API:', apiTrips.length, apiTrips);
     } catch (error: any) {
       console.error('Error fetching trips from API:', {
         message: error.message,
@@ -75,7 +95,15 @@ export const useTripStore = create<TripState>((set, get) => ({
   },
 
   addTrip: async (
-    trip: Omit<Trip, 'id' | 'created_at' | 'ending_kilometers' | 'ended_at'>
+    trip: Omit<
+      Trip,
+      | 'id'
+      | 'created_at'
+      | 'ending_kilometers'
+      | 'ended_at'
+      | 'start_latitude'
+      | 'start_longitude'
+    >
   ) => {
     const created_at = new Date().toISOString();
     const formattedStartedAt = new Date(trip.started_at)
@@ -83,6 +111,13 @@ export const useTripStore = create<TripState>((set, get) => ({
       .replace('T', ' ')
       .slice(0, 19);
     try {
+      // Get initial location
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      const { latitude, longitude } = location.coords;
+      console.log('Initial trip location:', { latitude, longitude });
+
       const config = {
         headers: { Accept: 'application/json' },
       };
@@ -95,6 +130,8 @@ export const useTripStore = create<TripState>((set, get) => ({
           started_at: formattedStartedAt,
           active: trip.active,
           end_notification_sent: trip.end_notification_sent,
+          start_latitude: latitude.toString(),
+          start_longitude: longitude.toString(),
         },
         config
       );
@@ -105,6 +142,8 @@ export const useTripStore = create<TripState>((set, get) => ({
         ending_kilometers: null,
         ended_at: null,
         started_at: formattedStartedAt,
+        start_latitude: latitude.toString(),
+        start_longitude: longitude.toString(),
       };
       set((state) => ({
         trips: [...state.trips, newTrip],
@@ -122,6 +161,12 @@ export const useTripStore = create<TripState>((set, get) => ({
         url: error.config?.url,
       });
       // Fallback to local state
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      }).catch(() => ({
+        coords: { latitude: 0, longitude: 0 },
+      }));
+      const { latitude, longitude } = location.coords;
       const newTrip = {
         ...trip,
         id: Date.now().toString(),
@@ -129,6 +174,8 @@ export const useTripStore = create<TripState>((set, get) => ({
         ending_kilometers: null,
         ended_at: null,
         started_at: formattedStartedAt,
+        start_latitude: latitude.toString(),
+        start_longitude: longitude.toString(),
       };
       set((state) => ({
         trips: [...state.trips, newTrip],
@@ -150,6 +197,33 @@ export const useTripStore = create<TripState>((set, get) => ({
       .replace('T', ' ')
       .slice(0, 19);
     try {
+      // Get current location for end point
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      const { latitude, longitude } = location.coords;
+      console.log('End trip location:', { latitude, longitude });
+
+      // Calculate distance
+      const trip = get().trips.find((t) => t.id === id);
+      let distance = 0;
+      if (trip && trip.start_latitude && trip.start_longitude) {
+        distance = calculateDistance(
+          parseFloat(trip.start_latitude),
+          parseFloat(trip.start_longitude),
+          latitude,
+          longitude
+        );
+        console.log(
+          `Calculated distance for trip ${id}: ${distance} km`,
+          `Start: (${trip.start_latitude}, ${trip.start_longitude})`,
+          `End: (${latitude}, ${longitude})`
+        );
+      } else {
+        console.warn(`No start coordinates for trip ${id}`);
+      }
+
+      // Update trip on backend
       const config = {
         headers: { Accept: 'application/json' },
       };
@@ -173,6 +247,10 @@ export const useTripStore = create<TripState>((set, get) => ({
         active: response.data.data.active,
         end_notification_sent: response.data.data.end_notification_sent,
         created_at: response.data.data.created_at,
+        start_latitude:
+          response.data.data.start_latitude || trip?.start_latitude,
+        start_longitude:
+          response.data.data.start_longitude || trip?.start_longitude,
       };
       set((state) => ({
         trips: state.trips.map((t) => (t.id === id ? updatedTrip : t)),
@@ -180,6 +258,7 @@ export const useTripStore = create<TripState>((set, get) => ({
         currentTripId: null,
       }));
       console.log('Trip finished via API:', updatedTrip);
+      return { trip: updatedTrip, distance };
     } catch (error: any) {
       console.error('Error finishing trip via API:', {
         message: error.message,
@@ -188,17 +267,35 @@ export const useTripStore = create<TripState>((set, get) => ({
         headers: error.config?.headers,
         url: error.config?.url,
       });
+      const trip = get().trips.find((t) => t.id === id);
+      let distance = 0;
+      if (trip && trip.start_latitude && trip.start_longitude) {
+        const location = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        }).catch(() => ({
+          coords: { latitude: 0, longitude: 0 },
+        }));
+        const { latitude, longitude } = location.coords;
+        distance = calculateDistance(
+          parseFloat(trip.start_latitude),
+          parseFloat(trip.start_longitude),
+          latitude,
+          longitude
+        );
+        console.log(
+          `Calculated distance for trip ${id} (local): ${distance} km`,
+          `Start: (${trip.start_latitude}, ${trip.start_longitude})`,
+          `End: (${latitude}, ${longitude})`
+        );
+      }
+      const updatedTrip = {
+        ...trip!,
+        active: false,
+        ending_kilometers,
+        ended_at: formattedEndedAt,
+      };
       set((state) => ({
-        trips: state.trips.map((t) =>
-          t.id === id
-            ? {
-                ...t,
-                active: false,
-                ending_kilometers,
-                ended_at: formattedEndedAt,
-              }
-            : t
-        ),
+        trips: state.trips.map((t) => (t.id === id ? updatedTrip : t)),
         isJourneyStarted: false,
         currentTripId: null,
       }));
@@ -207,6 +304,7 @@ export const useTripStore = create<TripState>((set, get) => ({
         ending_kilometers,
         ended_at,
       });
+      return { trip: updatedTrip, distance };
     }
   },
 
