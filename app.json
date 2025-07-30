@@ -12,7 +12,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.webfixerr.roadfuel",
@@ -21,7 +23,9 @@
         "CFBundleDisplayName": "RoadFuel",
         "NSLocationWhenInUseUsageDescription": "This app needs your location to track your journey.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs your location to track your journey in the background.",
-        "UIBackgroundModes": ["location"]
+        "UIBackgroundModes": [
+          "location"
+        ]
       }
     },
     "android": {
@@ -40,7 +44,12 @@
         "ACCESS_BACKGROUND_LOCATION",
         "POST_NOTIFICATIONS",
         "FOREGROUND_SERVICE",
-        "FOREGROUND_SERVICE_LOCATION"
+        "FOREGROUND_SERVICE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION"
       ],
       "foregroundService": {
         "useService": true,
@@ -85,8 +94,9 @@
         "origin": false
       },
       "eas": {
-        "projectId": "4964b295-2f3f-4a45-9428-4856cd9205e3"
+        "projectId": "45bd9629-c32d-4da1-baa0-02c544aac56e"
       }
-    }
+    },
+    "owner": "akash.mobile"
   }
 }
