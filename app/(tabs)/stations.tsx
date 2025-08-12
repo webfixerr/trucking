@@ -11,8 +11,10 @@ import { useEffect, useState } from 'react';
 import { ServiceStation } from '@/types/serviceStation';
 import AddServiceStationModal from '@/components/AddServiceStationModal';
 import { FuelPumpIcon } from '@/components/Icons';
+import { useTranslation } from 'react-i18next';
 
 export default function ServiceStationsScreen() {
+  const { t } = useTranslation();
   const { serviceStations, loadServiceStations, syncPending } =
     useServiceStationStore();
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -45,7 +47,8 @@ export default function ServiceStationsScreen() {
     <View style={styles.container}>
       <TextInput
         style={styles.searchInput}
-        placeholder="Search service stations..."
+        placeholderTextColor={'#888'}
+        placeholder={t('searchServiceStations')}
         value={searchQuery}
         onChangeText={setSearchQuery}
       />
@@ -54,10 +57,10 @@ export default function ServiceStationsScreen() {
         onPress={() => setIsModalVisible(true)}
         activeOpacity={0.7}
       >
-        <Text style={styles.buttonText}>Add Service Station</Text>
+        <Text style={styles.buttonText}>{t('addServiceStation')}</Text>
       </TouchableOpacity>
       <ScrollView>
-        <Text style={styles.sectionTitle}>Service Stations</Text>
+        <Text style={styles.sectionTitle}>{t('serviceStations')}</Text>
         {filteredStations.map((station) => (
           <View key={station.id} style={styles.itemContainer}>
             <View style={{ flex: 1 }}>
@@ -69,8 +72,11 @@ export default function ServiceStationsScreen() {
                 {station.name} - {station.location}
               </Text>
               <Text style={styles.itemSubtitle}>
-                Fuel Price: ${station.fuel_price}/L, Rating: {station.rating}
-                {station.is_global ? ' (Global)' : ''}
+                {t('stationInfo', {
+                  fuel_price: station.fuel_price,
+                  rating: station.rating,
+                  is_global: station.is_global ? t('global') : '',
+                })}
               </Text>
             </View>
             <View style={styles.iconContainer}>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   mileage?: string;
@@ -7,11 +8,12 @@ interface Props {
 }
 
 const TruckSummary: React.FC<Props> = ({ mileage, fuelLevel }) => {
+  const { t } = useTranslation();
   if (!mileage && !fuelLevel) return null;
 
   const cards = [
-    mileage && { title: 'Current\nMileage', value: mileage },
-    fuelLevel && { title: 'Fuel Level', value: fuelLevel },
+    mileage && { title: t('truckSummaryMileage'), value: mileage },
+    fuelLevel && { title: t('fuelLevel'), value: fuelLevel },
   ].filter(Boolean) as { title: string; value: string }[];
 
   return (

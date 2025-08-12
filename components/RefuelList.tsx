@@ -2,24 +2,26 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useServiceStationStore } from '@/stores/serviceStationStore';
 import { Refuel } from '@/types/refuel';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   data: Refuel[];
 }
 
 const RefuelList: React.FC<Props> = ({ data }) => {
+  const { t } = useTranslation();
   const { serviceStations } = useServiceStationStore();
 
   const getStationName = (serviceStationId: string) => {
     const station = serviceStations.find((s) => s.id === serviceStationId);
     return station
       ? `${station.name} - ${station.location}`
-      : 'Unknown Station';
+      : t('unknownStation');
   };
 
   return (
     <>
-      <Text style={styles.sectionTitle}>Refueling Log</Text>
+      <Text style={styles.sectionTitle}>{t('refuelLog')}</Text>
       {data.map((fuel, index) => (
         <View key={fuel.id} style={styles.itemContainer}>
           <View style={{ flex: 1 }}>
@@ -31,8 +33,11 @@ const RefuelList: React.FC<Props> = ({ data }) => {
               {getStationName(fuel.service_station_id)}
             </Text>
             <Text style={styles.itemSubtitle}>
-              {fuel.litres_fueled} L at ${fuel.price_per_litre}/L,{' '}
-              {fuel.kilometers_at_refuel} km
+              {t('refuelInfo', {
+                litres_fueled: fuel.litres_fueled,
+                price_per_litre: fuel.price_per_litre,
+                kilometers_at_refuel: fuel.kilometers_at_refuel,
+              })}
             </Text>
           </View>
           <View style={styles.dateContainer}>

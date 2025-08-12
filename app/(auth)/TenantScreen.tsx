@@ -14,8 +14,11 @@ import { useTenantStore } from '@/stores/tenantStore';
 import axios from 'axios';
 import { APP_URL } from '@/lib/api';
 import { Image } from 'expo-image';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitch from '@/components/LanguageSwitch';
 
 export default function TenantScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { setTenantDomain, tenantDomain } = useTenantStore();
   const [tenantName, setTenantName] = useState('');
@@ -75,10 +78,10 @@ export default function TenantScreen() {
           source={require('@/assets/images/logo.png')}
           style={styles.logo}
         />
-        <Text style={styles.title}>Find Workspace</Text>
+        <Text style={styles.title}>{t('findWorkspace')}</Text>
         <TextInput
           style={[styles.input, error ? styles.inputError : null]}
-          placeholder="Enter workspace"
+          placeholder={t('enterWorkspaceName')}
           placeholderTextColor="#888"
           value={tenantName}
           onChangeText={setTenantName}
@@ -97,7 +100,7 @@ export default function TenantScreen() {
           {isLoading ? (
             <ActivityIndicator color="white" />
           ) : (
-            <Text style={styles.submitButtonText}>Submit</Text>
+            <Text style={styles.submitButtonText}>{t('submit')}</Text>
           )}
         </TouchableOpacity>
       </View>

@@ -10,10 +10,10 @@ import RefuelList from '@/components/RefuelList';
 import TruckSummary from '@/components/TruckSummary';
 import AddRefuelModal from '@/components/AddRefuelModal';
 import { useEffect, useState } from 'react';
-import { Link } from 'expo-router';
-import { FuelPumpIcon } from '@/components/Icons';
+import { useTranslation } from 'react-i18next';
 
 export default function RefuelScreen() {
+  const { t } = useTranslation();
   const { refuelLogs, loadRefuel, syncPending } = useRefuelStore();
   const [isModalVisible, setIsModalVisible] = useState(false);
 
@@ -32,7 +32,7 @@ export default function RefuelScreen() {
             onPress={() => setIsModalVisible(true)}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>Add Refuel</Text>
+            <Text style={styles.buttonText}>{t("addRefuel")}</Text>
           </TouchableOpacity>
         </View>
         <RefuelList data={refuelLogs} />

@@ -14,8 +14,10 @@ import { MapMarkerIcon } from '@/components/Icons';
 import Toast from 'react-native-toast-message';
 import TruckSummary from '@/components/TruckSummary';
 import * as Location from 'expo-location';
+import { useTranslation } from 'react-i18next';
 
 export default function TripsScreen() {
+  const { t } = useTranslation();
   const {
     trips,
     isLoading,
@@ -49,8 +51,8 @@ export default function TripsScreen() {
       if (!servicesEnabled) {
         Toast.show({
           type: 'error',
-          text1: 'Location Services Disabled',
-          text2: 'Please enable GPS to start a trip.',
+          text1: t('locationDisabled'),
+          text2: t('requestLocation'),
         });
         return;
       }
@@ -63,8 +65,8 @@ export default function TripsScreen() {
       if (foregroundStatus !== 'granted' || backgroundStatus !== 'granted') {
         Toast.show({
           type: 'error',
-          text1: 'Permission Denied',
-          text2: 'Location permissions are required to start a trip.',
+          text1: t('permissionDenied'),
+          text2: t('requiredPermission'),
         });
         return;
       }
@@ -84,8 +86,11 @@ export default function TripsScreen() {
       setJourneyStarted(true);
       Toast.show({
         type: 'success',
-        text1: 'Journey Started',
-        text2: `Tracking trip from ${trip.origin} to ${trip.destination}`,
+        text1: t('journeyStarted'),
+        text2: t('journeyStartedTracking', {
+          origin: trip.origin,
+          destination: trip.destination,
+        }),
       });
 
       // Update current location
@@ -100,8 +105,8 @@ export default function TripsScreen() {
       console.error('Error starting journey:', error);
       Toast.show({
         type: 'error',
-        text1: 'Error',
-        text2: 'Failed to start journey.',
+        text1: t('error'),
+        text2: t('failedToStartJourney'),
       });
     }
   };
@@ -110,7 +115,7 @@ export default function TripsScreen() {
     try {
       const trip = trips.find((t) => t.id === tripId);
       if (!trip) {
-        throw new Error('Trip not found');
+        throw new Error(t('tripNotFound'));
       }
       const distance = (await finishTrip(tripId, '0', new Date().toISOString()))
         .distance;
@@ -125,22 +130,25 @@ export default function TripsScreen() {
       setCurrentTripId(null);
       setCurrentLocation(null);
       Alert.alert(
-        'Trip Completed',
-        `Total distance traveled: ${distance} km\nPredicted ending odometer: ${endingKilometers} km`,
-        [{ text: 'OK', style: 'default' }],
+        t('tripCompleted'),
+        t('totalDistance', {
+          distance,
+          endingKilometers,
+        }),
+        [{ text: t('ok'), style: 'default' }],
         { cancelable: false }
       );
       Toast.show({
         type: 'success',
-        text1: 'Journey Finished',
-        text2: 'Trip data synced.',
+        text1: t('journeyFinished'),
+        text2: t('tripDataSynced'),
       });
     } catch (error) {
       console.error('Error finishing journey:', error);
       Toast.show({
         type: 'error',
-        text1: 'Error',
-        text2: 'Failed to finish journey.',
+        text1: t('error'),
+        text2: t('failedToFinishJourney'),
       });
     }
   };
@@ -157,28 +165,33 @@ export default function TripsScreen() {
   return (
     <View style={styles.container}>
       <TruckSummary mileage="84,502 mi" />
-      {isLoading && <Text style={styles.loadingText}>Loading trips...</Text>}
+      {isLoading && <Text style={styles.loadingText}>{t('loadingTrips')}</Text>}
       <TouchableOpacity
         style={[styles.customButton, isJourneyStarted && styles.buttonDisabled]}
         onPress={() => setIsModalVisible(true)}
         activeOpacity={0.7}
         disabled={isJourneyStarted}
       >
-        <Text style={styles.buttonText}>Start Journey</Text>
+        <Text style={styles.buttonText}>{t('startJourney')}</Text>
       </TouchableOpacity>
       {activeTrip && (
         <View style={styles.tripContainer}>
           <View style={styles.tripDetails}>
             <MapMarkerIcon size={16} color="#555" />
             <Text style={styles.tripText}>
-              {activeTrip.origin} to {activeTrip.destination},{' '}
-              {activeTrip.beginning_kilometers} km
+              {t('activeTrip', {
+                origin: activeTrip.origin,
+                destination: activeTrip.destination,
+                beginningKilometers: activeTrip.beginning_kilometers,
+              })}
             </Text>
           </View>
           {activeTrip.start_latitude && activeTrip.start_longitude && (
             <Text style={styles.locationText}>
-              Start Location: {parseFloat(activeTrip.start_latitude).toFixed(4)}
-              , {parseFloat(activeTrip.start_longitude).toFixed(4)}
+              {t('startLocationText', {
+                latitude: parseFloat(activeTrip.start_latitude).toFixed(4),
+                longitude: parseFloat(activeTrip.start_longitude).toFixed(4),
+              })}
             </Text>
           )}
           <TouchableOpacity
@@ -186,32 +199,39 @@ export default function TripsScreen() {
             onPress={() => handleFinishJourney(activeTrip.id)}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>Finish Journey</Text>
+            <Text style={styles.buttonText}>{t('finishJourney')}</Text>
           </TouchableOpacity>
         </View>
       )}
       {recentTrips.length > 0 && (
         <>
-          <Text style={styles.sectionTitle}>Recent Trips</Text>
+          <Text style={styles.sectionTitle}>{t('recentTrips')}</Text>
           <ScrollView>
             {recentTrips.map((trip) => (
               <View key={trip.id} style={styles.tripContainer}>
                 <View style={styles.tripDetails}>
                   <MapMarkerIcon size={16} color="#555" />
                   <Text style={styles.tripText}>
-                    {trip.origin} to {trip.destination},{' '}
-                    {trip.beginning_kilometers} km
+                    {t('recentTrip', {
+                      origin: trip.origin,
+                      destination: trip.destination,
+                      beginningKilometers: trip.beginning_kilometers,
+                    })}
                   </Text>
                 </View>
                 {trip.ending_kilometers && (
                   <Text style={styles.tripText}>
-                    Ending Kilometers: {trip.ending_kilometers} km
+                    {t('endingKilometers', {
+                      value: trip.ending_kilometers,
+                    })}
                   </Text>
                 )}
                 {trip.start_latitude && trip.start_longitude && (
                   <Text style={styles.tripText}>
-                    Start Location: {parseFloat(trip.start_latitude).toFixed(4)}
-                    , {parseFloat(trip.start_longitude).toFixed(4)}
+                    {t('startLocationText', {
+                      latitude: parseFloat(trip.start_latitude).toFixed(4),
+                      longitude: parseFloat(trip.start_longitude).toFixed(4),
+                    })}
                   </Text>
                 )}
               </View>
@@ -221,8 +241,10 @@ export default function TripsScreen() {
       )}
       {isJourneyStarted && currentLocation && (
         <Text style={styles.locationText}>
-          Current Location: {currentLocation.latitude.toFixed(4)},{' '}
-          {currentLocation.longitude.toFixed(4)}
+          {t('currentLocation', {
+            latitude: currentLocation.latitude.toFixed(4),
+            longitude: currentLocation.longitude.toFixed(4),
+          })}
         </Text>
       )}
       <AddTripModal

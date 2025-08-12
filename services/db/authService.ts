@@ -31,6 +31,7 @@ export async function login(
       }
     );
     console.log('Login request headers:', { 'X-Tenant': tenant });
+    console.log('Login response:', response);
     const { access_token, user } = response.data;
     if (!access_token || !user?.id || !user?.name || !user?.email) {
       throw new Error('Invalid response from server');
@@ -46,7 +47,7 @@ export async function login(
     console.log('Auth data saved to SQLite');
     return { access_token, user };
   } catch (error: any) {
-    console.error('Login API error:', error.response?.data || error.message);
+    console.error('Login API error:', error ,error.response?.data || error.message);
     throw new Error(
       error.response?.data?.message || 'Invalid email or password'
     );

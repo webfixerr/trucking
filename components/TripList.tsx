@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Trip } from '@/types/trip';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   data: Trip[];
@@ -24,12 +25,13 @@ const TripList: React.FC<Props> = ({
   endingKilometers,
   setEndingKilometers,
 }) => {
+  const { t } = useTranslation();
   return (
     <View style={styles.container}>
       {title && <Text style={styles.sectionTitle}>{title}</Text>}
       {data.length === 0 ? (
         <Text style={styles.noTripsText}>
-          {title === 'Ongoing Trip' ? 'No ongoing trip' : 'No recent trips'}
+          {title === t('ongoingTrip') ? t('noOngoingTrip') : t('noRecentTrips')}
         </Text>
       ) : (
         data.map((trip, index) => {
@@ -43,12 +45,16 @@ const TripList: React.FC<Props> = ({
                   color="#000"
                   style={styles.icon}
                 />
-                <Text style={styles.cardTitle}>Trip {trip.id}</Text>
+                <Text style={styles.cardTitle}>
+                  {t('tripId', {
+                    id: trip.id,
+                  })}
+                </Text>
               </View>
               <View style={styles.routeContainer}>
                 <View style={styles.routePoint}>
                   <MaterialIcons name="place" size={20} color="#4CAF50" />
-                  <Text style={styles.routeLabel}>Origin</Text>
+                  <Text style={styles.routeLabel}>{t('origin')}</Text>
                   <Text style={styles.routeText}>{origin}</Text>
                 </View>
                 <MaterialIcons
@@ -59,17 +65,17 @@ const TripList: React.FC<Props> = ({
                 />
                 <View style={styles.routePoint}>
                   <MaterialIcons name="flag" size={20} color="#F44336" />
-                  <Text style={styles.routeLabel}>Destination</Text>
+                  <Text style={styles.routeLabel}>{t('destination')}</Text>
                   <Text style={styles.routeText}>{destination}</Text>
                 </View>
               </View>
               <View style={styles.detailsContainer}>
                 <View style={styles.detailItem}>
-                  <Text style={styles.detailLabel}>Distance</Text>
+                  <Text style={styles.detailLabel}>{t('distance')}</Text>
                   <Text style={styles.detailText}>{trip.distance} km</Text>
                 </View>
                 <View style={styles.detailItem}>
-                  <Text style={styles.detailLabel}>Date</Text>
+                  <Text style={styles.detailLabel}>{t('date')}</Text>
                   <Text style={styles.detailText}>{trip.date}</Text>
                 </View>
               </View>
@@ -77,7 +83,7 @@ const TripList: React.FC<Props> = ({
                 <View style={styles.finishContainer}>
                   <TextInput
                     style={styles.input}
-                    placeholder="Enter ending kilometers"
+                    placeholder={t('enterEndingKilometers')}
                     keyboardType="numeric"
                     value={endingKilometers}
                     onChangeText={setEndingKilometers}
@@ -87,7 +93,7 @@ const TripList: React.FC<Props> = ({
                     onPress={onFinishPress}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.buttonText}>Finish Journey</Text>
+                    <Text style={styles.buttonText}>{t('finishJourney')}</Text>
                   </TouchableOpacity>
                 </View>
               )}

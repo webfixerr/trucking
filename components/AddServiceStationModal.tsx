@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useState } from 'react';
 import { useServiceStationStore } from '@/stores/serviceStationStore';
+import { useTranslation } from 'react-i18next';
 
 interface AddServiceStationModalProps {
   visible: boolean;
@@ -23,6 +24,7 @@ export default function AddServiceStationModal({
   onClose,
   onStationAdded,
 }: AddServiceStationModalProps) {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [location, setLocation] = useState('');
   const [fuelPrice, setFuelPrice] = useState('');
@@ -34,18 +36,18 @@ export default function AddServiceStationModal({
 
   const handleAddServiceStation = async () => {
     if (!name || !location || !fuelPrice || !rating) {
-      setError('Please fill in all fields');
+      setError(t('allFields'));
       return;
     }
 
     const ratingNum = parseFloat(rating);
     const fuelPriceNum = parseFloat(fuelPrice);
     if (isNaN(ratingNum) || ratingNum < 1 || ratingNum > 5) {
-      setError('Rating must be between 1 and 5');
+      setError(t('ratingRange'));
       return;
     }
     if (isNaN(fuelPriceNum) || fuelPriceNum <= 0) {
-      setError('Fuel price must be a positive number');
+      setError(t('fuelPricePositive'));
       return;
     }
 
@@ -71,7 +73,7 @@ export default function AddServiceStationModal({
       }
     } catch (error: any) {
       setLoading(false);
-      setError('Failed to add service station. Data saved for syncing.');
+      setError(t('failedAddServiceStation'));
     }
   };
 
@@ -84,44 +86,44 @@ export default function AddServiceStationModal({
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Add New Service Station</Text>
+          <Text style={styles.modalTitle}>{t('addNewServiceStation')}</Text>
 
-          <Text style={styles.inputLabel}>Name</Text>
+          <Text style={styles.inputLabel}>{t('name')}</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter station name"
+            placeholder={t('serviceStationNamePlaceholder')}
             value={name}
             onChangeText={setName}
           />
 
-          <Text style={styles.inputLabel}>Location</Text>
+          <Text style={styles.inputLabel}>{t('location')}</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter location"
+            placeholder={t('serviceStationLocationPlaceholder')}
             value={location}
             onChangeText={setLocation}
           />
 
-          <Text style={styles.inputLabel}>Fuel Price ($/L)</Text>
+          <Text style={styles.inputLabel}>F{t('fuelPrice')}</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter fuel price"
+            placeholder={t('fuelPricePlaceholder')}
             keyboardType="numeric"
             value={fuelPrice}
             onChangeText={setFuelPrice}
           />
 
-          <Text style={styles.inputLabel}>Rating (1-5)</Text>
+          <Text style={styles.inputLabel}>{t('rating')}</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter rating"
+            placeholder={t('ratingPlaceholder')}
             keyboardType="numeric"
             value={rating}
             onChangeText={setRating}
           />
 
           <View style={styles.toggleContainer}>
-            <Text style={styles.toggleLabel}>Global Station:</Text>
+            <Text style={styles.toggleLabel}>{t("globalServiceStation")}</Text>
             <Switch
               value={isGlobal}
               onValueChange={setIsGlobal}
@@ -139,7 +141,7 @@ export default function AddServiceStationModal({
             activeOpacity={0.7}
             disabled={loading}
           >
-            <Text style={styles.buttonText}>Add Station</Text>
+            <Text style={styles.buttonText}>{t('addStation')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -148,7 +150,7 @@ export default function AddServiceStationModal({
             activeOpacity={0.7}
             disabled={loading}
           >
-            <Text style={styles.buttonText}>Cancel</Text>
+            <Text style={styles.buttonText}>{t('cancel')}</Text>
           </TouchableOpacity>
         </View>
       </View>

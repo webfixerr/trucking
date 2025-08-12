@@ -1,8 +1,10 @@
 import { Link, Stack, useRouter } from 'expo-router';
 import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native';
 import { useAuthStore } from '@/stores/authStore';
+import { useTranslation } from 'react-i18next';
 
 export default function NotFoundScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
@@ -19,19 +21,18 @@ export default function NotFoundScreen() {
       <Stack.Screen options={{ title: 'Oops!' }} />
       <View style={styles.container}>
         <Image
-          source={{ uri: 'https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?q=80&w=2067&auto=format&fit=crop' }}
+          source={{
+            uri: 'https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?q=80&w=2067&auto=format&fit=crop',
+          }}
           style={styles.image}
         />
-        <Text style={styles.title}>Page Not Found</Text>
-        <Text style={styles.subtitle}>
-          We couldn't find the page you're looking for.
-        </Text>
-        <TouchableOpacity 
-          style={styles.button}
-          onPress={handleNavigateHome}
-        >
+        <Text style={styles.title}>{t('notFound')}</Text>
+        <Text style={styles.subtitle}>{t('notFoundSubtitle')} </Text>
+        <TouchableOpacity style={styles.button} onPress={handleNavigateHome}>
           <Text style={styles.buttonText}>
-            Return to {isAuthenticated ? 'Home' : 'Login'}
+            {t('notFoundButton', {
+              home : isAuthenticated ? t('home') : t('login'),
+            })}
           </Text>
         </TouchableOpacity>
       </View>

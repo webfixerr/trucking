@@ -12,8 +12,8 @@ import { Picker } from '@react-native-picker/picker';
 import { useState, useEffect } from 'react';
 import { useRefuelStore } from '@/stores/refuelStore';
 import { useServiceStationStore } from '@/stores/serviceStationStore';
-import { ServiceStation } from '@/types/serviceStation';
 import AddServiceStationModal from '@/components/AddServiceStationModal';
+import { useTranslation } from 'react-i18next';
 
 interface AddRefuelModalProps {
   visible: boolean;
@@ -24,6 +24,7 @@ export default function AddRefuelModal({
   visible,
   onClose,
 }: AddRefuelModalProps) {
+  const { t } = useTranslation();
   const [kilometersAtRefuel, setKilometersAtRefuel] = useState('');
   const [litresFueled, setLitresFueled] = useState('');
   const [pricePerLitre, setPricePerLitre] = useState('');
@@ -55,15 +56,15 @@ export default function AddRefuelModal({
     const litresNum = parseFloat(litresFueled);
     const priceNum = parseFloat(pricePerLitre);
     if (isNaN(kilometersNum) || kilometersNum <= 0) {
-      setError('Kilometers must be a positive number');
+      setError(t('kmPositive'));
       return;
     }
     if (isNaN(litresNum) || litresNum <= 0) {
-      setError('Litres fueled must be a positive number');
+      setError(t('litresPositive'));
       return;
     }
     if (isNaN(priceNum) || priceNum <= 0) {
-      setError('Price per litre must be a positive number');
+      setError(t('pricePositive'));
       return;
     }
 
@@ -84,7 +85,7 @@ export default function AddRefuelModal({
       onClose();
     } catch (error: any) {
       setLoading(false);
-      setError('Failed to add refuel. Data saved for syncing.');
+      setError(t('failedAddRefuel'));
     }
   };
 
@@ -102,16 +103,16 @@ export default function AddRefuelModal({
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Add Refuel</Text>
+          <Text style={styles.modalTitle}>{t('addRefuel')}</Text>
 
-          <Text style={styles.inputLabel}>Service Station</Text>
+          <Text style={styles.inputLabel}>{t('serviceStation')}</Text>
           <View style={styles.pickerContainer}>
             <Picker
               selectedValue={serviceStationId}
               onValueChange={(value) => setServiceStationId(value)}
               style={styles.picker}
             >
-              <Picker.Item label="Select a service station" value="" />
+              <Picker.Item label={t('selectServiceStation')} value="" />
               {serviceStations.map((station) => (
                 <Picker.Item
                   key={station.id}
@@ -125,32 +126,32 @@ export default function AddRefuelModal({
               onPress={() => setAddStationModalVisible(true)}
               activeOpacity={0.7}
             >
-              <Text style={styles.addStationButtonText}>+ Add New</Text>
+              <Text style={styles.addStationButtonText}>{t('addNew')}</Text>
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.inputLabel}>Kilometers at Refuel</Text>
+          <Text style={styles.inputLabel}>{t('kmAtRefuel')}</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter kilometers at refuel"
+            placeholder={t('kmplaceholder')}
             keyboardType="numeric"
             value={kilometersAtRefuel}
             onChangeText={setKilometersAtRefuel}
           />
 
-          <Text style={styles.inputLabel}>Litres Fueled</Text>
+          <Text style={styles.inputLabel}>{t('litresFueled')}</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter litres fueled"
+            placeholder={t('litresPlaceholder')}
             keyboardType="numeric"
             value={litresFueled}
             onChangeText={setLitresFueled}
           />
 
-          <Text style={styles.inputLabel}>Price per Litre</Text>
+          <Text style={styles.inputLabel}>{t('pricePerLitre')}</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter price per litre"
+            placeholder={t('pricePlaceholder')}
             keyboardType="numeric"
             value={pricePerLitre}
             onChangeText={setPricePerLitre}
@@ -165,7 +166,7 @@ export default function AddRefuelModal({
             activeOpacity={0.7}
             disabled={loading}
           >
-            <Text style={styles.buttonText}>Add Refuel</Text>
+            <Text style={styles.buttonText}>{t('addRefuel')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -174,7 +175,7 @@ export default function AddRefuelModal({
             activeOpacity={0.7}
             disabled={loading}
           >
-            <Text style={styles.buttonText}>Cancel</Text>
+            <Text style={styles.buttonText}>{t('cancel')}</Text>
           </TouchableOpacity>
         </View>
       </View>

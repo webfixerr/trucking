@@ -11,11 +11,14 @@ import { useAuthStore } from '@/stores/authStore';
 import { useTenantStore } from '@/stores/tenantStore';
 import { router } from 'expo-router';
 import { initializeApiInterceptors } from '@/lib/api';
+import { useTranslation } from 'react-i18next';
 
 import { FontAwesome } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import LanguageSwitch from '@/components/LanguageSwitch';
 
 export default function LoginScreen() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -55,12 +58,12 @@ export default function LoginScreen() {
         source={require('@/assets/images/logo.png')}
         style={styles.logo}
       />
-      <Text style={styles.title}>Login</Text>
+      <Text style={styles.title}>{t('login')}</Text>
 
-      <Text style={styles.label}>Email</Text>
+      <Text style={styles.label}>{t('email')}</Text>
       <TextInput
         style={styles.input}
-        placeholder="Enter email"
+        placeholder={t('enterEmail')}
         placeholderTextColor="#888"
         value={email}
         onChangeText={setEmail}
@@ -68,11 +71,11 @@ export default function LoginScreen() {
         autoCapitalize="none"
       />
 
-      <Text style={styles.label}>Password</Text>
+      <Text style={styles.label}>{t('password')}</Text>
       <View style={styles.passwordContainer}>
         <TextInput
           style={styles.passwordInput}
-          placeholder="Enter password"
+          placeholder={t('enterPassword')}
           placeholderTextColor="#888"
           value={password}
           onChangeText={setPassword}
@@ -99,8 +102,9 @@ export default function LoginScreen() {
         activeOpacity={0.7}
         disabled={loading}
       >
-        <Text style={styles.buttonText}>Login</Text>
+        <Text style={styles.buttonText}>{t('login')}</Text>
       </TouchableOpacity>
+      <LanguageSwitch />
     </View>
   );
 }

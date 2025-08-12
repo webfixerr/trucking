@@ -1,3 +1,4 @@
+import i18n from '@/app/i18n/i18n';
 import { useEffect, useState } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -231,6 +232,13 @@ export default function RootLayout() {
 
   useEffect(() => {
     setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    // Clear stored language on first load (remove after testing)
+    AsyncStorage.removeItem('language')
+      .then(() => console.log('Cleared stored language'))
+      .catch((error) => console.error('Error clearing AsyncStorage:', error));
   }, []);
 
   useEffect(() => {

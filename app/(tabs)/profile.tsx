@@ -1,8 +1,11 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitch from '@/components/LanguageSwitch';
 
 export default function ProfileScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { user, logout } = useAuthStore();
 
@@ -19,12 +22,13 @@ export default function ProfileScreen() {
           {user?.email || 'user@example.com'}
         </Text>
       </View>
+      <LanguageSwitch />
       <TouchableOpacity
         style={styles.logoutButton}
         onPress={handleLogout}
         activeOpacity={0.8}
       >
-        <Text style={styles.logoutButtonText}>Logout</Text>
+        <Text style={styles.logoutButtonText}>{t('logout')}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -40,7 +44,7 @@ const styles = StyleSheet.create({
   },
   profileContainer: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 10,
   },
   userName: {
     fontSize: 28,

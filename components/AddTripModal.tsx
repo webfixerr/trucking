@@ -8,6 +8,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface AddTripModalProps {
   visible: boolean;
@@ -25,6 +26,7 @@ export default function AddTripModal({
   onClose,
   onSubmit,
 }: AddTripModalProps) {
+  const { t } = useTranslation();
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
   const [beginningKilometers, setBeginningKilometers] = useState('');
@@ -32,12 +34,12 @@ export default function AddTripModal({
 
   const handleSubmit = () => {
     if (!origin || !destination || !beginningKilometers) {
-      setError('Please fill in all fields');
+      setError(t('allFields'));
       return;
     }
     const kilometersNum = parseFloat(beginningKilometers);
     if (isNaN(kilometersNum) || kilometersNum <= 0) {
-      setError('Beginning kilometers must be a positive number');
+      setError(t('beginkmPositive'));
       return;
     }
     setError('');
@@ -62,25 +64,25 @@ export default function AddTripModal({
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Start New Journey</Text>
-          <Text style={styles.inputLabel}>Origin</Text>
+          <Text style={styles.modalTitle}>{t('startNewJourney')}</Text>
+          <Text style={styles.inputLabel}>{t('origin')}</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter origin"
+            placeholder={t('originPlaceholder')}
             value={origin}
             onChangeText={setOrigin}
           />
-          <Text style={styles.inputLabel}>Destination</Text>
+          <Text style={styles.inputLabel}>{t('destination')}</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter destination"
+            placeholder={t('destinationPlaceholder')}
             value={destination}
             onChangeText={setDestination}
           />
-          <Text style={styles.inputLabel}>Beginning Kilometers</Text>
+          <Text style={styles.inputLabel}>{t('beginningKilometers')}</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter beginning kilometers"
+            placeholder={t('beginningKilometersPlaceholder')}
             keyboardType="numeric"
             value={beginningKilometers}
             onChangeText={setBeginningKilometers}
@@ -91,14 +93,14 @@ export default function AddTripModal({
             onPress={handleSubmit}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>Start Journey</Text>
+            <Text style={styles.buttonText}>{t('startJourney')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.customButton, styles.cancelButton]}
             onPress={onClose}
             activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>Cancel</Text>
+            <Text style={styles.buttonText}>{t('cancel')}</Text>
           </TouchableOpacity>
         </View>
       </View>
