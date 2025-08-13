@@ -32,7 +32,11 @@ export async function login(
     );
     console.log('Login request headers:', { 'X-Tenant': tenant });
     console.log('Login response:', response);
-    const { access_token, user } = response.data;
+    const data = response.data;
+    if (data.code === 'ACCOUNT_NOT_ACTIVATED') {
+      throw new Error('User not activated');
+    }
+    const { access_token, user } = data;
     if (!access_token || !user?.id || !user?.name || !user?.email) {
       throw new Error('Invalid response from server');
     }
@@ -47,7 +51,14 @@ export async function login(
     console.log('Auth data saved to SQLite');
     return { access_token, user };
   } catch (error: any) {
-    console.error('Login API error:', error ,error.response?.data || error.message);
+    console.error(
+      'Login API error:',
+      error,
+      error.response?.data || error.message
+    );
+    if (error.response?.data?.code === 'ACCOUNT_NOT_ACTIVATED') {
+      throw new Error('User not activated');
+    }
     throw new Error(
       error.response?.data?.message || 'Invalid email or password'
     );
@@ -121,5 +132,58 @@ export function debugAuthTable(): void {
     });
   } catch (error) {
     console.error('Error reading auth table:', error);
+  }
+}
+
+export async function activateUser(
+  email: string,
+  code: string,
+  tenant: string
+): Promise<void> {
+  try {
+    const response = await axios.post(
+      `https://${tenant}/api/activate`,
+      { email, code },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'X-Tenant': tenant,
+        },
+      }
+    );
+    console.log('Activate response:', response.data);
+    if (response.data.message !== 'Account activated successfully.') {
+      throw new Error(response.data.message || 'Activation failed');
+    }
+  } catch (error: any) {
+    console.error('Activate API error:', error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || 'Activation error');
+  }
+}
+
+export async function resendPin(email: string, tenant: string): Promise<void> {
+  try {
+    const response = await axios.post(
+      `https://${tenant}/api/resend-code`,
+      { email },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'X-Tenant': tenant,
+        },
+      }
+    );
+    console.log('Resend code response:', response.data);
+    if (response.data.message !== 'Activation code resent successfully.') {
+      throw new Error(response.data.message || 'Failed to resend code');
+    }
+  } catch (error: any) {
+    console.error(
+      'Resend code API error:',
+      error.response?.data || error.message
+    );
+    throw new Error(error.response?.data?.message || 'Resend error');
   }
 }

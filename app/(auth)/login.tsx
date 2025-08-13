@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useAuthStore } from '@/stores/authStore';
 import { useTenantStore } from '@/stores/tenantStore';
-import { router } from 'expo-router';
+import { router, usePathname } from 'expo-router';
 import { initializeApiInterceptors } from '@/lib/api';
 import { useTranslation } from 'react-i18next';
 
@@ -19,45 +19,56 @@ import LanguageSwitch from '@/components/LanguageSwitch';
 
 export default function LoginScreen() {
   const { t } = useTranslation();
+  const pathname = usePathname();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuthStore();
-  const { tenantDomain } = useTenantStore();
+  const { tenantDomain: tenant } = useTenantStore();
 
   const handleLogin = async () => {
     if (!email || !password) {
       setError('Please fill in all fields');
       return;
     }
-    if (!tenantDomain) {
+    if (!tenant) {
       setError('Tenant not set. Please select a tenant first.');
-      router.replace('/TenantScreen');
+      router.replace('/tenantscreen');
       return;
     }
 
     try {
       setError('');
       setLoading(true);
-      await login(email, password, tenantDomain);
+      await login(email, password, tenant);
       initializeApiInterceptors();
       setLoading(false);
-      router.replace('/(tabs)/places');
-    } catch (error: any) {
+      router.replace('/(tabs)');
+    } catch (err: any) {
+      console.log('Login error message:', err.message);
+      if (err.message === 'User not activated') {
+        try {
+          setTimeout(() => {
+            router.replace({ pathname: '/activation', params: { email } });
+          }, 100);
+        } catch (navError) {
+          console.error('Navigation error:', navError);
+          setError('Failed to navigate to activation screen');
+        }
+      } else {
+        setError(err.message || 'Invalid email or password');
+        console.log('Other login error:', err.message);
+      }
+    } finally {
       setLoading(false);
-      setError(error.message || 'Login failed. Please check your credentials.');
-      console.error('Login error:', error.response?.data || error.message);
     }
   };
 
   return (
     <View style={styles.container}>
-      <Image
-        source={require('@/assets/images/logo.png')}
-        style={styles.logo}
-      />
+      <Image source={require('@/assets/images/logo.png')} style={styles.logo} />
       <Text style={styles.title}>{t('login')}</Text>
 
       <Text style={styles.label}>{t('email')}</Text>

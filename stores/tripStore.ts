@@ -79,7 +79,7 @@ export const useTripStore = create<TripState>((set, get) => ({
         start_longitude: trip.start_longitude || null,
       }));
       set({ trips: apiTrips });
-      console.log('Trips loaded from API:', apiTrips.length, apiTrips);
+      // console.log('Trips loaded from API:', apiTrips.length, apiTrips);
     } catch (error: any) {
       console.error('Error fetching trips from API:', {
         message: error.message,

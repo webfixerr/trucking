@@ -22,14 +22,8 @@ import { useTenantStore } from '@/stores/tenantStore';
 import { useTripStore } from '@/stores/tripStore';
 import { useRefuelStore } from '@/stores/refuelStore';
 import { useServiceStationStore } from '@/stores/serviceStationStore';
+import { RootParamList } from '@/types/navigation';
 
-type RootParamList = {
-  '(tabs)': {
-    screen?: 'index' | 'places' | 'refuel' | 'stations' | 'profile';
-  };
-  '(auth)': undefined;
-  '+not-found': undefined;
-};
 
 export default function TabsLayout() {
   const { isAuthenticated, isLoading, loadAuth } = useAuthStore();

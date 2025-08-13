@@ -12,7 +12,7 @@ export default function NotFoundScreen() {
     if (isAuthenticated) {
       router.replace('/(tabs)');
     } else {
-      router.replace('/login');
+      router.replace('/(auth)/login');
     }
   };
 

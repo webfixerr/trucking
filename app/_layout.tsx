@@ -184,7 +184,7 @@ function useProtectedRoute(
     const inAuthGroup = segments[0] === '(auth)';
     if (!tenantDomain && !inAuthGroup) {
       console.log('Navigating to TenantScreen');
-      router.replace('/TenantScreen');
+      router.replace('/tenantscreen');
     } else if (!isAuthenticated && !inAuthGroup) {
       console.log('Navigating to login');
       router.replace('/login');
@@ -272,7 +272,7 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false }} initialRouteName="(auth)">
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="TenantScreen" options={{ headerShown: false }} />
+        <Stack.Screen name="i18n/i18n" />
         <Stack.Screen name="+not-found" options={{ presentation: 'modal' }} />
       </Stack>
       <StatusBar style="auto" />

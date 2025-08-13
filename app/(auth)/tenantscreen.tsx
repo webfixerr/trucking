@@ -15,7 +15,6 @@ import axios from 'axios';
 import { APP_URL } from '@/lib/api';
 import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
-import LanguageSwitch from '@/components/LanguageSwitch';
 
 export default function TenantScreen() {
   const { t } = useTranslation();

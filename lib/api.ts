@@ -73,7 +73,7 @@ export const initializeApiInterceptors = () => {
             '401 Unauthorized, clearing auth and redirecting to login'
           );
           await getAuthStore.getState().logout();
-          router.replace('/TenantScreen');
+          router.replace('/tenantscreen');
         } else if (error.response?.status === 404) {
           console.error('404 Not Found:', error.config.url);
         } else if (error.response?.status === 500) {
