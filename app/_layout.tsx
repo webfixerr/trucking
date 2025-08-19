@@ -129,7 +129,10 @@ async function initializeApp() {
   try {
     const permissionsGranted = await requestLocationPermissions();
     if (!permissionsGranted) {
-      throw new Error('Location permissions not granted');
+      console.warn(
+        'Location permissions not granted at startup. App will still run.'
+      );
+      // throw new Error('Location permissions not granted');
     }
 
     let db;
@@ -163,7 +166,8 @@ async function initializeApp() {
     return { authData, tenant, db };
   } catch (err: any) {
     console.error('App initialization error:', err);
-    throw new Error('Failed to initialize app: ' + err.message);
+    // throw new Error('Failed to initialize app: ' + err.message);
+    return { authData: null, tenant: null, db: null };
   }
 }
 
