@@ -1,5 +1,6 @@
 import i18n from '@/app/i18n/i18n';
 import { useEffect, useState } from 'react';
+import * as Linking from 'expo-linking';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
@@ -31,15 +32,16 @@ async function requestLocationPermissions() {
           'Enable Location Services',
           'Please enable location services (GPS) on your device to track your journey.',
           [
-            { text: 'Cancel', style: 'cancel', onPress: () => resolve() },
             {
               text: 'Open Settings',
               onPress: async () => {
-                await Location.requestForegroundPermissionsAsync();
+                await Linking.openSettings();
                 resolve();
               },
             },
-          ]
+            { text: 'Cancel', style: 'cancel', onPress: () => resolve() },
+          ],
+          { cancelable: true, onDismiss: () => resolve() }
         );
       });
       Toast.show({
@@ -66,7 +68,8 @@ async function requestLocationPermissions() {
           [
             { text: 'Cancel', style: 'cancel', onPress: () => resolve() },
             { text: 'Continue', onPress: () => resolve() },
-          ]
+          ],
+          { cancelable: true, onDismiss: () => resolve() }
         );
       });
     }
