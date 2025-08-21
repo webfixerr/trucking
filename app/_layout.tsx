@@ -125,6 +125,9 @@ async function requestLocationPermissions() {
       text2: 'Failed to request location permissions.',
     });
     return false;
+  } finally {
+    await SplashScreen.hideAsync();
+    console.log('Splash screen hidden after requesting permissions');
   }
 }
 
