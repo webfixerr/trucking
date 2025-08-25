@@ -133,14 +133,6 @@ async function requestLocationPermissions() {
 
 async function initializeApp() {
   try {
-    const permissionsGranted = await requestLocationPermissions();
-    if (!permissionsGranted) {
-      console.warn(
-        'Location permissions not granted at startup. App will still run.'
-      );
-      // throw new Error('Location permissions not granted');
-    }
-
     let db;
     let attempts = 0;
     const maxAttempts = 3;
@@ -239,6 +231,19 @@ export default function RootLayout() {
     }
     prepare();
   }, [tenantDomain]);
+
+  useEffect(() => {
+    const checkPermissions = async () => {
+      const permissionsGranted = await requestLocationPermissions();
+      if (!permissionsGranted) {
+        console.warn(
+          'Location permissions not granted at startup. App will still run.'
+        );
+        // throw new Error('Location permissions not granted');
+      }
+    };
+    checkPermissions();
+  }, []);
 
   useEffect(() => {
     setIsMounted(true);
