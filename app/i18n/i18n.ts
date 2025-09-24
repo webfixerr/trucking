@@ -7,7 +7,7 @@ import en from './en.json';
 import es from './es.json';
 import type { LanguageDetectorAsyncModule } from 'i18next';
 
-const lang = "en"
+const lang = "es"
 
 const languageDetector: LanguageDetectorAsyncModule = {
   type: 'languageDetector',

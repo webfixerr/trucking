@@ -1,5 +1,5 @@
 import React from 'react';
-import Svg, { Path, Circle, Rect } from 'react-native-svg';
+import Svg, { Path, Circle, Rect, G } from 'react-native-svg';
 
 interface IconProps {
   size?: number;
@@ -29,21 +29,11 @@ export const MapMarkerIcon: React.FC<IconProps> = ({
       d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"
       fill={color}
     />
-    <Circle cx="12" cy="9" r="2.5" fill="#fff" />
+    <Circle cx="12" cy="9" r="3" fill="#fff" />
   </Svg>
 );
 
-export const UserIcon: React.FC<IconProps> = ({
-  size = 24,
-  color = '#000',
-}) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Circle cx="12" cy="8" r="4" fill={color} />
-    <Path d="M4 20c0-4.418 3.582-8 8-8s8 3.582 8 8" fill={color} />
-  </Svg>
-);
-
-export const FuelPumpIcon: React.FC<IconProps> = ({
+export const GasPumpIcon: React.FC<IconProps> = ({
   size = 24,
   color = '#000',
 }) => (
@@ -89,6 +79,45 @@ export const FuelPumpIcon: React.FC<IconProps> = ({
   </Svg>
 );
 
+export const AddIcon: React.FC<IconProps> = ({ size = 24, color = '#000' }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M12 5V19M5 12H19"
+      stroke={color}
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const CarIcon: React.FC<IconProps> = ({ size = 24, color = '#000' }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M19 18H5C3.89543 18 3 17.1046 3 16V10.5C3 9.67157 3.67157 9 4.5 9H19.5C20.3284 9 21 9.67157 21 10.5V16C21 17.1046 20.1046 18 19 18Z"
+      stroke={color}
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Rect x="5" y="13" width="14" height="5" stroke={color} strokeWidth={1.5} />
+    <Path
+      d="M7 18V21M17 18V21"
+      stroke={color}
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M3 14H21"
+      stroke={color}
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
 export const SettingsIcon: React.FC<IconProps> = ({
   size = 24,
   color = '#000',
@@ -112,5 +141,20 @@ export const SettingsIcon: React.FC<IconProps> = ({
 
     {/* Central hub */}
     <Circle cx="12" cy="12" r="1.8" fill={color} />
+  </Svg>
+);
+
+export const CheckIcon: React.FC<IconProps> = ({
+  size = 24,
+  color = '#000',
+}) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M20 6L9 17L4 12"
+      stroke={color}
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
   </Svg>
 );

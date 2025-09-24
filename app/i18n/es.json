@@ -10,8 +10,6 @@
   "password": "Contraseña",
   "enterPassword": "Introduce tu contraseña",
 
-  "homePage": "Página principal",
-
   "error": "Error",
   "locationDisabled": "Servicios de ubicación desactivados",
   "requestLocation": "Por favor, habilita el GPS para iniciar un viaje.",

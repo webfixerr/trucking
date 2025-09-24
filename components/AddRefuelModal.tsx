@@ -105,8 +105,8 @@ export default function AddRefuelModal({
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>{t('addRefuel')}</Text>
 
-          <Text style={styles.inputLabel}>{t('serviceStation')}</Text>
-          <View style={styles.pickerContainer}>
+          {/* <Text style={styles.inputLabel}>{t('serviceStation')}</Text> */}
+          {/* <View style={styles.pickerContainer}>
             <Picker
               selectedValue={serviceStationId}
               onValueChange={(value) => setServiceStationId(value)}
@@ -128,7 +128,7 @@ export default function AddRefuelModal({
             >
               <Text style={styles.addStationButtonText}>{t('addNew')}</Text>
             </TouchableOpacity>
-          </View>
+          </View> */}
 
           <Text style={styles.inputLabel}>{t('kmAtRefuel')}</Text>
           <TextInput

@@ -11,7 +11,6 @@ export default function HomeScreen() {
   return (
     <ScrollView style={styles.container}>
       <TruckSummary mileage="84,502 mi" fuelLevel="65%" />
-      <Text style={styles.title}>{t('homePage')}</Text>
     </ScrollView>
   );
 }

@@ -10,7 +10,7 @@ import { useServiceStationStore } from '@/stores/serviceStationStore';
 import { useEffect, useState } from 'react';
 import { ServiceStation } from '@/types/serviceStation';
 import AddServiceStationModal from '@/components/AddServiceStationModal';
-import { FuelPumpIcon } from '@/components/Icons';
+import { GasPumpIcon } from '@/components/Icons';
 import { useTranslation } from 'react-i18next';
 
 export default function ServiceStationsScreen() {
@@ -45,7 +45,7 @@ export default function ServiceStationsScreen() {
 
   return (
     <View style={styles.container}>
-      <TextInput
+      {/* <TextInput
         style={styles.searchInput}
         placeholderTextColor={'#888'}
         placeholder={t('searchServiceStations')}
@@ -58,7 +58,7 @@ export default function ServiceStationsScreen() {
         activeOpacity={0.7}
       >
         <Text style={styles.buttonText}>{t('addServiceStation')}</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
       <ScrollView>
         <Text style={styles.sectionTitle}>{t('serviceStations')}</Text>
         {filteredStations.map((station) => (
@@ -80,7 +80,7 @@ export default function ServiceStationsScreen() {
               </Text>
             </View>
             <View style={styles.iconContainer}>
-              <FuelPumpIcon size={16} color="#555" />
+              <GasPumpIcon size={16} color="#555" />
             </View>
           </View>
         ))}
