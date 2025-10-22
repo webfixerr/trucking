@@ -15,7 +15,6 @@ import { useTranslation } from 'react-i18next';
 
 import { FontAwesome } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import LanguageSwitch from '@/components/LanguageSwitch';
 
 export default function LoginScreen() {
   const { t } = useTranslation();
@@ -69,7 +68,10 @@ export default function LoginScreen() {
   return (
     <View style={styles.container}>
       <Image source={require('@/assets/images/logo.png')} style={styles.logo} />
-      <Text style={styles.title}>{t('login')}</Text>
+      <Image
+        source={require('@/assets/images/driver.jpeg')}
+        style={styles.logo2}
+      />
 
       <Text style={styles.label}>{t('email')}</Text>
       <TextInput
@@ -115,7 +117,19 @@ export default function LoginScreen() {
       >
         <Text style={styles.buttonText}>{t('login')}</Text>
       </TouchableOpacity>
-      <LanguageSwitch />
+      <Text style={styles.forgetPwd}>{t('forgetPwd')}</Text>
+      <View
+        style={{
+          marginTop: 18,
+          alignItems: 'center',
+          display: 'flex',
+          flexDirection: 'row',
+          gap: 6,
+        }}
+      >
+        <Text style={styles.noAccount}>{t('noAccount')}</Text>
+        <Text style={styles.contactCompany}>{t('contactCompany')}</Text>
+      </View>
     </View>
   );
 }
@@ -125,8 +139,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#f5f5f5',
+    paddingHorizontal: 8,
+    backgroundColor: 'white',
   },
   title: {
     fontSize: 28,
@@ -137,22 +151,28 @@ const styles = StyleSheet.create({
     width: 300,
     height: 100,
   },
+  logo2: {
+    width: 250,
+    height: 250,
+    marginBottom: 12,
+  },
   label: {
     fontSize: 16,
     fontWeight: '500',
-    marginBottom: 8,
+    marginBottom: 4,
     alignSelf: 'flex-start',
     width: '90%',
     maxWidth: 400,
     paddingHorizontal: 16,
+    color: '#374151',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 10,
+    borderColor: '#F3F4F6',
+    borderRadius: 12,
+    padding: 14,
     marginBottom: 16,
-    fontSize: 16,
+    fontSize: 14,
     width: '90%',
     maxWidth: 400,
     color: '#333',
@@ -167,10 +187,10 @@ const styles = StyleSheet.create({
   passwordInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 16,
+    borderColor: '#F3F4F6',
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 14,
     color: '#333',
   },
   eyeIcon: {
@@ -193,11 +213,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '90%',
     maxWidth: 400,
-    marginTop: 10,
+    marginTop: 24,
   },
   buttonText: {
     color: '#ffffff',
     fontSize: 18,
     fontWeight: '500',
+  },
+  forgetPwd: {
+    fontSize: 12,
+    color: '#3B82F6',
+    textAlign: 'center',
+    fontWeight: '400',
+    marginTop: 16,
+  },
+  noAccount: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  contactCompany: {
+    fontSize: 14,
+    color: '#3B82F6',
+    fontWeight: '600',
   },
 });

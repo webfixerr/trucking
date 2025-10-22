@@ -1,7 +1,10 @@
 {
-  "findWorkspace": "Buscar espacio de trabajo",
-  "enterWorkspaceName": "Introduce el espacio de trabajo",
-  "submit": "Enviar",
+  "findWorkspace": "Código de la empresa",
+  "enterWorkspaceName": "Ingresa el código",
+  "submit": "Siguiente",
+  "errorCode": "Ingrese el código de la empresa",
+  "codeHint": "Ponga el código de la empresa",
+  "startText": "Empezar",
 
   "home": "Inicio",
   "login": "Iniciar sesión",
@@ -9,6 +12,9 @@
   "enterEmail": "Introduce tu correo electrónico",
   "password": "Contraseña",
   "enterPassword": "Introduce tu contraseña",
+  "forgetPwd": "¿Olvidaste tu contraseña?",
+  "noAccount": "¿No tienes cuenta?",
+  "contactCompany": "Contacta con tu empresa",
 
   "error": "Error",
   "locationDisabled": "Servicios de ubicación desactivados",

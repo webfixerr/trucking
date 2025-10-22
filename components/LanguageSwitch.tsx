@@ -39,7 +39,6 @@ const LanguageSwitch = () => {
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    marginVertical: 16,
   },
   toggleContainer: {
     width: 120,

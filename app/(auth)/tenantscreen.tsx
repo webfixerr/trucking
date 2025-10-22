@@ -15,6 +15,7 @@ import axios from 'axios';
 import { APP_URL } from '@/lib/api';
 import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
+import LanguageSwitch from '@/components/LanguageSwitch';
 
 export default function TenantScreen() {
   const { t } = useTranslation();
@@ -23,6 +24,7 @@ export default function TenantScreen() {
   const [tenantName, setTenantName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [disable, setDisable] = useState(true);
 
   useEffect(() => {
     if (tenantDomain) {
@@ -30,9 +32,15 @@ export default function TenantScreen() {
     }
   }, [tenantDomain, router]);
 
+  const handleTenantChange = (text: string) => {
+    setTenantName(text);
+    setDisable(false);
+  };
+
   const handleSubmit = async () => {
     if (!tenantName.trim()) {
-      setError('Please enter a tenant name');
+      setError(t('errorCode'));
+      setDisable(true);
       return;
     }
 
@@ -77,13 +85,17 @@ export default function TenantScreen() {
           source={require('@/assets/images/logo.png')}
           style={styles.logo}
         />
+        <Image
+          source={require('@/assets/images/truck.jpeg')}
+          style={styles.logo2}
+        />
         <Text style={styles.title}>{t('findWorkspace')}</Text>
         <TextInput
           style={[styles.input, error ? styles.inputError : null]}
           placeholder={t('enterWorkspaceName')}
           placeholderTextColor="#888"
           value={tenantName}
-          onChangeText={setTenantName}
+          onChangeText={handleTenantChange}
           autoCapitalize="none"
           editable={!isLoading}
         />
@@ -91,10 +103,11 @@ export default function TenantScreen() {
         <TouchableOpacity
           style={[
             styles.submitButton,
+            disable && styles.submitButtonDisabled,
             isLoading && styles.submitButtonDisabled,
           ]}
           onPress={handleSubmit}
-          disabled={isLoading}
+          disabled={isLoading || disable}
         >
           {isLoading ? (
             <ActivityIndicator color="white" />
@@ -102,6 +115,13 @@ export default function TenantScreen() {
             <Text style={styles.submitButtonText}>{t('submit')}</Text>
           )}
         </TouchableOpacity>
+        <Text style={styles.codeHint}>{t('codeHint')}</Text>
+        <TouchableOpacity style={styles.startBtn}>
+          <Text style={[styles.submitButtonText, styles.startBtnText]}>
+            {t('startText')}
+          </Text>
+        </TouchableOpacity>
+        <LanguageSwitch />
       </View>
     </KeyboardAvoidingView>
   );
@@ -111,30 +131,30 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    padding: 24,
+    paddingHorizontal: 32,
     backgroundColor: 'white',
   },
   form: {
     gap: 16,
   },
   logo: {
-    width: 300,
+    width: 350,
     height: 100,
   },
+  logo2: {
+    width: 300,
+    height: 300,
+  },
   title: {
-    fontSize: 24,
+    fontSize: 16,
     fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: 16,
-    color: '#1a1a1a',
+    color: '#6B7280',
   },
   input: {
     backgroundColor: '#f5f5f5',
-    padding: 16,
+    padding: 14,
     borderRadius: 12,
-    fontSize: 16,
-    marginBottom: 8,
-    textAlign: 'center',
+    fontSize: 14,
   },
   inputError: {
     borderColor: '#f44336',
@@ -142,22 +162,42 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: '#f44336',
-    fontSize: 12,
+    fontSize: 10,
     textAlign: 'center',
-    marginBottom: 8,
   },
   submitButton: {
     backgroundColor: '#3b82f6',
-    padding: 16,
+    padding: 14,
     borderRadius: 12,
     alignItems: 'center',
   },
   submitButtonDisabled: {
     opacity: 0.7,
+    color: 'white',
+    backgroundColor: '#E4E4E7',
   },
   submitButtonText: {
     color: 'white',
     fontWeight: '600',
+    fontSize: 14,
+  },
+  codeHint: {
+    fontSize: 12,
+    color: '#3B82F6',
+    textAlign: 'center',
+    textDecorationLine: 'underline',
+    fontWeight: '400',
+  },
+  startBtn: {
+    backgroundColor: '#6D28D9',
+    padding: 14,
+    borderRadius: 16,
+    alignItems: 'center',
+    boxShadow: '0px 8px 6px rgba(0, 0, 0, 0.1)',
+  },
+  startBtnText: {
+    color: 'white',
+    fontWeight: '700',
     fontSize: 16,
   },
 });
